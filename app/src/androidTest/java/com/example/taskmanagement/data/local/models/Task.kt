@@ -1,4 +1,4 @@
-package com.example.taskmanagement.data.models
+package com.example.taskmanagement.data.local.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
