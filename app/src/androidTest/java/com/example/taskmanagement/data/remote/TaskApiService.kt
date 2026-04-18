@@ -1,9 +1,12 @@
 package com.example.taskmanagement.data.remote
 
 import com.example.taskmanagement.data.remote.models.TaskDto
+import com.example.taskmanagement.data.remote.models.TaskDtoItem
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface TaskApiService {
 
@@ -15,5 +18,12 @@ interface TaskApiService {
         @Body task: TaskDto
     ): TaskDto
 
+    suspend fun updateTask(
+        @Path("id") taskId : Int,
+        @Body task: TaskDtoItem
+    ): TaskDtoItem
 
+    suspend fun deleteTask(
+        @Path("id") taskId : Int
+    ): Response<Unit>
 }
