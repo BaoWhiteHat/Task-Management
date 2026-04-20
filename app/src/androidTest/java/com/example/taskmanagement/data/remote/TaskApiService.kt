@@ -15,8 +15,8 @@ interface TaskApiService {
 
     @POST("tasks")
     suspend fun createTask(
-        @Body task: TaskDto
-    ): TaskDto
+        @Body task: TaskDtoItem
+    ): TaskDtoItem
 
     suspend fun updateTask(
         @Path("id") taskId : Int,
