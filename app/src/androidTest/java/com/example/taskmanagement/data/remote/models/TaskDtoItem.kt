@@ -9,13 +9,13 @@ data class TaskDtoItem(
     @SerializedName("dueDate")
     val dueDate: String = "",
     @SerializedName("id")
-    val id: String = "",
+    val id: Int = 0,
     @SerializedName("isCompleted")
     val isCompleted: Boolean = false,
     @SerializedName("priority")
     val priority: String = "",
     @SerializedName("reminderEnabled")
-    val reminderEnabled: String = "",
+    val reminderEnabled: Boolean = false,
     @SerializedName("tags")
     val tags: String = "",
     @SerializedName("title")
