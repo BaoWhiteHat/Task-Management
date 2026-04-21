@@ -7,7 +7,7 @@ import com.example.taskmanagement.data.remote.models.TaskDtoItem
 import java.time.LocalDate
 
 object TaskMapper {
-    fun mapDtoToEntity(dto: TaskDto): List<Task> {
+    fun mapDtoToEntity(dto: com.example.taskmanagement.data.remote.models.TaskDto): List<com.example.taskmanagement.data.local.models.Task> {
         return dto.map { dtoItem ->
             val safeDueDate = try {
                 LocalDate.parse(dtoItem.dueDate)
