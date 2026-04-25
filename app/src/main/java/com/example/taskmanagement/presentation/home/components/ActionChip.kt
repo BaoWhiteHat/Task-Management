@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +22,7 @@ fun ActionChip(
     modifier: Modifier = Modifier,
     text: String,
     icon: @Composable () -> Unit,
-    onClick:() -> Unit,
+    onClick: () -> Unit,
 ) {
     Surface(
         modifier = modifier,
@@ -46,5 +45,7 @@ fun ActionChip(
 @Preview
 @Composable
 private fun ActionChipPrev() {
-    ActionChip(text = "Text 123", icon = {Icon(imageVector = Icons.Default.Add, contentDescription = null)})  {}
+    ActionChip(
+        text = "Text 123",
+        icon = {Icon(imageVector = Icons.Default.Image, null)})  {}
 }
