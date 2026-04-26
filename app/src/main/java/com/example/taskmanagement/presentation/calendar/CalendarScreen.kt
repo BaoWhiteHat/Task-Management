@@ -2,7 +2,6 @@ package com.example.taskmanagement.presentation.calendar
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,9 +30,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.models.dummyTasks
 import com.example.taskmanagement.presentation.my_tasks.TaskItemComponent
-import java.nio.file.WatchEvent
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun CalendarScreen(
@@ -52,7 +51,6 @@ fun CalendarScreen(
         onPreviousWeek = viewModel::onPreviousWeek,
         onPreviousMonth = viewModel::onPreviousMonth,
     )
-
 }
 
 @Composable
@@ -68,6 +66,7 @@ private fun CalendarScreen(
     onTaskCheckedChange: (Task, Boolean) -> Unit
 ) {
     val today = remember { LocalDate.now() }
+
     Column(modifier = modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
@@ -87,7 +86,9 @@ private fun CalendarScreen(
                 }
             )
         }
+
         Spacer(Modifier.height(16.dp))
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -96,6 +97,7 @@ private fun CalendarScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             val isMonthView = state.selectedView == CalenderView.MONTH
+
             IconButton(
                 onClick = {
                     if (isMonthView) onPreviousMonth() else onPreviousWeek()
@@ -106,15 +108,17 @@ private fun CalendarScreen(
                     contentDescription = "Previous"
                 )
             }
+
             Text(
                 text = state.currentMonth.format(
                     DateTimeFormatter.ofPattern(
-                        if (isMonthView) "MMMM yyyy" else "dd MMM"
-
+                        if (isMonthView) "MMMM yyyy" else "dd MMM",
+                        Locale.ENGLISH
                     )
                 ),
                 style = MaterialTheme.typography.titleLarge
             )
+
             IconButton(
                 onClick = {
                     if (isMonthView) onNextMonth() else onNextWeek()
@@ -125,9 +129,10 @@ private fun CalendarScreen(
                     contentDescription = "Next"
                 )
             }
-
         }
+
         Spacer(Modifier.height(16.dp))
+
         if (state.selectedView == CalenderView.MONTH) {
             CalendarGrid(
                 selectedDate = state.selectedDate,
@@ -145,28 +150,35 @@ private fun CalendarScreen(
                 today = today
             )
         }
+
         Spacer(Modifier.height(24.dp))
+
         Text(
-            text = state.selectedDate.format(DateTimeFormatter.ofPattern("MMMM d")),
+            text = state.selectedDate.format(
+                DateTimeFormatter.ofPattern("MMMM d", Locale.ENGLISH)
+            ),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-        Spacer(Modifier.height(16.dp))
-        LazyColumn(
 
-        ){
-            items(state.tasksForSelectedDate,key = {it.id}){task ->
-                TaskItemComponent (
+        Spacer(Modifier.height(16.dp))
+
+        LazyColumn {
+            items(
+                state.tasksForSelectedDate,
+                key = { it.id }
+            ) { task ->
+                TaskItemComponent(
                     task = task,
-                    onCheckedChange = {isChecked -> onTaskCheckedChange(task,isChecked)}
+                    onCheckedChange = { isChecked ->
+                        onTaskCheckedChange(task, isChecked)
+                    }
                 )
                 Spacer(Modifier.height(16.dp))
             }
         }
-
     }
-
 }
 
 @Preview(showBackground = true)
@@ -182,6 +194,6 @@ private fun CalendarScreenPrev() {
         onNextWeek = {},
         onPreviousWeek = {},
         onViewChanged = {},
-        onTaskCheckedChange = {_,_ ->}
+        onTaskCheckedChange = { _, _ -> }
     )
 }
