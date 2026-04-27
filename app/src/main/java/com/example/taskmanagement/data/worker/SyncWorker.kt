@@ -18,7 +18,6 @@ import com.example.taskmanagement.di.Graph
 import retrofit2.HttpException
 import retrofit2.Retrofit
 const val SYNC_CHANNEL_ID = "SYNC_CHANNEL_ID"
-
 class SyncWorker(
     private val appContext: Context,
     params: WorkerParameters
