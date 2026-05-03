@@ -22,7 +22,7 @@ data class NewTaskUiState(
     val description:String = "",
     val dueDate: LocalDate = LocalDate.now(),
     val selectedPriority: Priority = Priority.LOW,
-    val selectedTag: TaskTag? = null,
+    val selectedTag: TaskTag? = TaskTag.WORK,
     val isReminderEnabled: Boolean = false,
     val isTaskSaved: Boolean = false,
     val errorMessage: String? = null
@@ -41,7 +41,7 @@ class NewTaskViewModel (
     fun onTagChange(tag: TaskTag) = _uiState.update { it.copy(selectedTag = tag) }
     fun onReminderChange(isEnabled: Boolean) = _uiState.update { it.copy(isReminderEnabled = isEnabled) }
     fun onErrorShown() = _uiState.update { it.copy(errorMessage = null) }
-    fun onTaskSavedHandled() = _uiState.update { it.copy(isTaskSaved = true) }
+    fun onTaskSavedHandled() = _uiState.update { it.copy(isTaskSaved = false) }
 
     fun createTask(){
         val state = uiState.value

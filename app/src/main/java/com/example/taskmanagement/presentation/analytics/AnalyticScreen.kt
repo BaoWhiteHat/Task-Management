@@ -29,7 +29,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -37,8 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlin.io.path.Path
-import kotlin.io.path.moveTo
+
 
 @Composable
 fun AnalyticsScreen(
@@ -259,6 +257,8 @@ fun LineGraph(
     fillColor: Color = MaterialTheme.colorScheme.primary.copy(.2f)
 ) {
     Canvas(modifier = modifier) {
+        if (data.size < 2) return@Canvas
+
         val width = size.width
         val height = size.height
 

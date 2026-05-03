@@ -82,7 +82,7 @@ private fun NewTaskScreen(
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, year: Int, month: Int, dayOfMoth: Int ->
-            onDueDateChange(LocalDate.of(year, month, dayOfMoth))
+            onDueDateChange(LocalDate.of(year, month + 1, dayOfMoth))
         },
         calendar.get(Calendar.YEAR),
         calendar.get(Calendar.MONTH),

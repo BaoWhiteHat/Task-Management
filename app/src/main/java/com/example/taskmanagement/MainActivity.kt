@@ -13,10 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.taskmanagement.presentation.TaskApp
 import com.example.taskmanagement.presentation.ui.theme.TaskManagementTheme
+import com.example.taskmanagement.utils.Utils
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Utils.createNotificationChannel(this)
         enableEdgeToEdge()
         setContent {
             TaskManagementTheme {

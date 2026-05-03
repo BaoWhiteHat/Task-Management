@@ -9,7 +9,7 @@ import com.example.taskmanagement.data.local.dao.TaskDao
 import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.type_converters.DateTypeConverter
 
-@Database(entities = [Task::class], version = 1, exportSchema = false)
+@Database(entities = [Task::class], version = 2, exportSchema = false)
 @TypeConverters(DateTypeConverter::class)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun taskDao(): TaskDao
@@ -24,7 +24,9 @@ abstract class AppDatabase: RoomDatabase() {
                     context = context.applicationContext,
                     klass = AppDatabase::class.java,
                     name = "task_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }
