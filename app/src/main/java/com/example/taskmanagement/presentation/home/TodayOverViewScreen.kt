@@ -198,7 +198,7 @@ private fun GreetingSection(modifier: Modifier = Modifier) {
     }
     val today = remember {
         LocalDate.now().format(
-            DateTimeFormatter.ofPattern("EEEE, dd/MM", Locale("vi"))
+            DateTimeFormatter.ofPattern("EEEE, dd/MM", Locale.ENGLISH)
         )
     }
 
