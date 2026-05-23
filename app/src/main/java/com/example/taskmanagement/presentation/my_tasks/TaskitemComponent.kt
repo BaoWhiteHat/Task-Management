@@ -31,6 +31,11 @@ import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.models.dummyTasks
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 import java.time.LocalDate
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PlayCircle
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.outlined.Timer
 
 @Composable
 fun TaskItemComponent(
@@ -60,7 +65,12 @@ fun TaskItemComponent(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .then(
+                if (onFocusClick != null && !task.isCompleted)
+                    Modifier.clickable { onFocusClick() }
+                else Modifier
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Priority color bar
@@ -128,22 +138,16 @@ fun TaskItemComponent(
 
             Spacer(Modifier.width(6.dp))
 
-            // Focus button
-            if (onFocusClick != null) {
-                Text(
-                    text = "Focus",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .clickable { onFocusClick() }
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
+            // Focus indicator — tap whole card to start focus
+            if (onFocusClick != null && !task.isCompleted) {
+                Icon(
+                    imageVector = Icons.Outlined.Timer,
+                    contentDescription = "Focus on this task",
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = .6f),
+                    modifier = Modifier.size(18.dp)
                 )
                 Spacer(Modifier.width(6.dp))
             }
-
             // Priority badge
             Text(
                 text = task.priority.uppercase(),

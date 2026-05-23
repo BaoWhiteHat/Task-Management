@@ -30,7 +30,7 @@ fun TaskApp(modifier: Modifier = Modifier) {
         topBar = {
             when(currentRoute){
                 Screen.Home.route -> {}
-                Screen.MyTasks.route -> MyTaskTopAppBar()
+                Screen.MyTasks.route -> {}
                 Screen.Calendar.route -> CalendarTopAppBar()
                 Screen.Analytics.route -> AnalyticsTopAppBar()
                 Screen.NewTask.route -> NewTaskTopAppBar { navController.popBackStack() }
