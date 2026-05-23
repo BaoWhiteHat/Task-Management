@@ -32,6 +32,10 @@ import com.example.taskmanagement.presentation.calendar.CalendarScreen
 import com.example.taskmanagement.presentation.home.TodayOverViewScreen
 import com.example.taskmanagement.presentation.my_tasks.MyTasksScreen
 import com.example.taskmanagement.presentation.new_task.NewTaskScreen
+import com.example.taskmanagement.presentation.focus.FocusScreen
+import android.net.Uri
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 sealed class Screen(
     val route: String,
@@ -43,6 +47,8 @@ sealed class Screen(
     object Analytics : Screen("analytics", Icons.Default.Analytics, "Analytics")
     object NewTask : Screen("NewTask")
     object MyTasks : Screen("MyTasks", Icons.Default.Task, title = "My tasks")
+
+    object Focus : Screen("focus")
 }
 
 @Composable
@@ -119,9 +125,31 @@ fun TaskNavigation(
     ){
         composable(route = Screen.Home.route) { TodayOverViewScreen(modifier = modifier) }
         composable(route = Screen.NewTask.route) { NewTaskScreen(modifier = modifier) {  navController.popBackStack()} }
-        composable(route = Screen.MyTasks.route) { MyTasksScreen(modifier = modifier) }
+        composable(route = Screen.MyTasks.route) { MyTasksScreen(modifier = modifier,   navController = navController) }
         composable(route = Screen.Analytics.route) { AnalyticsScreen(modifier = modifier) }
         composable(route = Screen.Calendar.route) { CalendarScreen(modifier = modifier) }
+
+        composable(
+            route = "${Screen.Focus.route}?taskTitle={taskTitle}",
+            arguments = listOf(
+                navArgument("taskTitle") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) { backStackEntry ->
+            val taskTitle = backStackEntry.arguments
+                ?.getString("taskTitle")
+                ?.let { Uri.decode(it) }
+                .orEmpty()
+
+            FocusScreen(
+                taskTitle = taskTitle,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
     }
 
 }

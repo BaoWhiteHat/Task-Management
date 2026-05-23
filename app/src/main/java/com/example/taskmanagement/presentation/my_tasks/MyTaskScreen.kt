@@ -23,12 +23,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.models.dummyTasks
+import android.net.Uri
+import com.example.taskmanagement.presentation.navigation.Screen
 
 @Composable
 fun MyTasksScreen(
     modifier: Modifier = Modifier,
+    navController: NavHostController,   // 👈 THÊM
     viewModel: MyTasksViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -36,7 +40,8 @@ fun MyTasksScreen(
         state = uiState,
         onTagChange = viewModel::onTagChange,
         onTaskCheckedChange = viewModel::onTaskCheckedChange,
-        modifier = modifier
+        modifier = modifier,
+        navController = navController,   // 👈
     )
 
 }
@@ -47,7 +52,9 @@ private fun MyTaskScreen(
     modifier: Modifier = Modifier,
     state: MyTasksUiState,
     onTagChange: (TaskTag) -> Unit,
-    onTaskCheckedChange: (Task, Boolean) -> Unit
+    onTaskCheckedChange: (Task, Boolean) -> Unit,
+    navController: NavHostController   // 👈 THÊM
+
 ) {
     Column(
         modifier = modifier.fillMaxSize()
@@ -95,7 +102,14 @@ private fun MyTaskScreen(
             ){task ->
                 TaskItemComponent(
                     task = task,
-                    onCheckedChange = {isCompleted -> onTaskCheckedChange(task,isCompleted)}
+                    onCheckedChange = { isCompleted ->
+                        onTaskCheckedChange(task, isCompleted)
+                    },
+                    onFocusClick = {
+                        navController.navigate(
+                            "${Screen.Focus.route}?taskTitle=${Uri.encode(task.title)}"
+                        )
+                    }
                 )
             }
         }
@@ -104,15 +118,16 @@ private fun MyTaskScreen(
 
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun MyTaskScreenPrev() {
-    MyTaskScreen(
-        state = MyTasksUiState(
-            tasksForSelectedTag = dummyTasks,
-            selectedTag = TaskTag.WORK
-        ),
-        onTaskCheckedChange = {_,_ ->},
-        onTagChange = {}
-    )
-}
+//@Preview(showBackground = true)
+//@Composable
+//private fun MyTaskScreenPrev() {
+//    MyTaskScreen(
+//        state = MyTasksUiState(
+//            tasksForSelectedTag = dummyTasks,
+//            selectedTag = TaskTag.WORK
+//        ),
+//        onTaskCheckedChange = {_,_ ->},
+//        onTagChange = {},
+//
+//    )
+//}

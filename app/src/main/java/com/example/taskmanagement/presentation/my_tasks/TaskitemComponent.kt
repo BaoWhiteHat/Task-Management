@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -29,6 +30,8 @@ fun TaskItemComponent(
     modifier: Modifier = Modifier,
     task: Task,
     onCheckedChange: (Boolean) -> Unit,
+    onFocusClick: (() -> Unit)? = null   // 👈 sửa dòng này
+    // 👈 THÊM
 ) {
     val priority = Priority.entries.find { it.name == task.priority } ?: Priority.LOW
     Card(
@@ -74,6 +77,12 @@ fun TaskItemComponent(
                 }
             }
 
+            if (onFocusClick != null) {
+                Button(onClick = onFocusClick) {
+                    Text("Focus")
+                }
+            }
+
             Text(
                 text = task.dueDate.toString(),
                 modifier = Modifier.padding(horizontal = 6.dp)
@@ -83,10 +92,10 @@ fun TaskItemComponent(
 
 }
 
-@Preview
-@Composable
-private fun TaskItemCompPrev() {
-    TaskItemComponent(
-        task = dummyTasks[0]
-    ) { }
-}
+//@Preview
+//@Composable
+//private fun TaskItemCompPrev() {
+//    TaskItemComponent(
+//        task = dummyTasks[0]
+//    ) { }
+//}
