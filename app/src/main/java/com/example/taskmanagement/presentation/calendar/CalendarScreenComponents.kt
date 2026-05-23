@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import java.time.DayOfWeek
@@ -43,12 +44,12 @@ fun SegmentedButton(
         modifier = modifier
             .background(
                 color = MaterialTheme.colorScheme.surfaceVariant,
-                RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp)
             )
             .border(
-                1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
-                RoundedCornerShape(12.dp)
+                width = 0.5.dp,
+                color = MaterialTheme.colorScheme.outline,
+                shape = RoundedCornerShape(12.dp)
             )
     ) {
         items.forEach { item ->
@@ -61,20 +62,20 @@ fun SegmentedButton(
                     contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary
                     else MaterialTheme.colorScheme.onSurfaceVariant
                 ),
-                shape = MaterialTheme.shapes.medium,
+                shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
                     .weight(1f)
-                    .height(40.dp),
+                    .height(38.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
-                    item
+                    text = item,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                 )
-
             }
         }
     }
-
 }
 
 @Composable
@@ -90,76 +91,79 @@ fun CalendarGrid(
     val dayOfWeekOfFirstDay = firstDayOfMonth.dayOfWeek
     val daysInMonth = currentMonth.lengthOfMonth()
     val leadingEmptyDays = (dayOfWeekOfFirstDay.value - DayOfWeek.MONDAY.value + 7) % 7
-    Column(
-        modifier = modifier.padding(horizontal = 16.dp)
-    ) {
+
+    Column(modifier = modifier.padding(horizontal = 16.dp)) {
+        // Day name headers
         Row(modifier = Modifier.fillMaxWidth()) {
             listOf("M", "T", "W", "T", "F", "S", "S").forEach { dayName ->
                 Text(
                     text = dayName,
                     modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
-
             }
         }
+
         Spacer(Modifier.height(8.dp))
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
             userScrollEnabled = false
         ) {
-            items(leadingEmptyDays) {
-                Spacer(Modifier.size(40.dp))
-            }
+            items(leadingEmptyDays) { Spacer(Modifier.size(40.dp)) }
+
             items(daysInMonth) { day ->
                 val date = currentMonth.withDayOfMonth(day + 1)
                 val isSelected = date == selectedDate
                 val isToday = date == today
                 val hasTasks = date in markedDates
+
                 Box(
                     modifier = Modifier
                         .size(40.dp)
                         .padding(4.dp)
                         .clickable { onDateSelected(date) }
-                        .let {
-                            if (isSelected) it.background(
-                                MaterialTheme.colorScheme.primary,
-                                CircleShape
-                            )
-                            else if (isToday) it.border(
-                                2.dp,
-                                MaterialTheme.colorScheme.primary,
-                                CircleShape
-                            )
-                            else it
-                        },
+                        .then(
+                            when {
+                                isSelected -> Modifier.background(
+                                    MaterialTheme.colorScheme.primary, CircleShape
+                                )
+                                isToday -> Modifier.border(
+                                    1.5.dp, MaterialTheme.colorScheme.primary, CircleShape
+                                )
+                                else -> Modifier
+                            }
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = (day + 1).toString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = if (isToday || isSelected) FontWeight.SemiBold else FontWeight.Normal,
                         color = when {
                             isSelected -> MaterialTheme.colorScheme.onPrimary
                             isToday -> MaterialTheme.colorScheme.primary
                             else -> MaterialTheme.colorScheme.onSurfaceVariant
                         }
                     )
-                    if (hasTasks && !isSelected){
+                    // Task dot indicator
+                    if (hasTasks && !isSelected) {
                         Box(
                             modifier = Modifier
-                                .size(5.dp)
-                                .background(MaterialTheme.colorScheme.secondary, CircleShape)
+                                .size(4.dp)
+                                .background(MaterialTheme.colorScheme.primary, CircleShape)
                                 .align(Alignment.BottomCenter)
-                                .offset(y = 12.dp)
+                                .offset(y = 11.dp)
                         )
                     }
                 }
             }
         }
-
     }
-
 }
-
 
 @Composable
 fun WeeklyCalendarGrid(
@@ -171,20 +175,23 @@ fun WeeklyCalendarGrid(
     today: LocalDate
 ) {
     val weekDays = (0 until 7).map { currentWeekStartDate.plusDays(it.toLong()) }
-    Column(
-        modifier = modifier.padding(horizontal = 16.dp)
-    ) {
+
+    Column(modifier = modifier.padding(horizontal = 16.dp)) {
         Row(modifier = Modifier.fillMaxWidth()) {
             listOf("M", "T", "W", "T", "F", "S", "S").forEach { dayName ->
                 Text(
                     text = dayName,
                     modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
-
             }
         }
+
         Spacer(Modifier.height(8.dp))
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
             userScrollEnabled = false
@@ -194,45 +201,46 @@ fun WeeklyCalendarGrid(
                 val isSelected = date == selectedDate
                 val isToday = date == today
                 val hasTasks = date in markedDates
+
                 Box(
                     modifier = Modifier
                         .size(40.dp)
                         .padding(4.dp)
                         .clickable { onDateSelected(date) }
-                        .let {
-                            if (isSelected) it.background(
-                                MaterialTheme.colorScheme.primary,
-                                CircleShape
-                            )
-                            else if (isToday) it.border(
-                                2.dp,
-                                MaterialTheme.colorScheme.primary,
-                                CircleShape
-                            )
-                            else it
-                        },
+                        .then(
+                            when {
+                                isSelected -> Modifier.background(
+                                    MaterialTheme.colorScheme.primary, CircleShape
+                                )
+                                isToday -> Modifier.border(
+                                    1.5.dp, MaterialTheme.colorScheme.primary, CircleShape
+                                )
+                                else -> Modifier
+                            }
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = date.dayOfMonth.toString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = if (isToday || isSelected) FontWeight.SemiBold else FontWeight.Normal,
                         color = when {
                             isSelected -> MaterialTheme.colorScheme.onPrimary
                             isToday -> MaterialTheme.colorScheme.primary
                             else -> MaterialTheme.colorScheme.onSurfaceVariant
                         }
                     )
-                    if (hasTasks && !isSelected){
+                    if (hasTasks && !isSelected) {
                         Box(
                             modifier = Modifier
-                                .size(5.dp)
-                                .background(MaterialTheme.colorScheme.secondary, CircleShape)
+                                .size(4.dp)
+                                .background(MaterialTheme.colorScheme.primary, CircleShape)
                                 .align(Alignment.BottomCenter)
-                                .offset(y = 12.dp)
+                                .offset(y = 11.dp)
                         )
                     }
                 }
             }
         }
     }
-
 }
