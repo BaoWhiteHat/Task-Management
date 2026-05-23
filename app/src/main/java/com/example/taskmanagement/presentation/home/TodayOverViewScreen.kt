@@ -1,7 +1,14 @@
 package com.example.taskmanagement.presentation.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,19 +21,28 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,15 +51,19 @@ import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.models.dummyTasks
 import com.example.taskmanagement.presentation.home.components.OverViewCard
 import com.example.taskmanagement.presentation.home.components.TodayTask
+import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun TodayOverViewScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
 ) {
-    val uiSTate by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     TodayOverViewScreen(
-        state = uiSTate,
+        state = uiState,
         onRefresh = viewModel::onRefresh,
         onTaskCheckedChanged = viewModel::onTaskCheckedChange,
         onSortChanged = viewModel::onSortChanged,
@@ -55,94 +75,320 @@ fun TodayOverViewScreen(
 private fun TodayOverViewScreen(
     modifier: Modifier = Modifier,
     state: HomeUIState,
-    onRefresh:() -> Unit,
-    onTaskCheckedChanged:(Task, Boolean) -> Unit,
-    onSortChanged:(SortOrder) -> Unit
+    onRefresh: () -> Unit,
+    onTaskCheckedChanged: (Task, Boolean) -> Unit,
+    onSortChanged: (SortOrder) -> Unit
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     val isRefreshing = state.sycStatus == SyncStatus.SYNCING
-    Column (
+
+    val totalTasks = state.completedCount + state.remainingCount
+    val progress = if (totalTasks > 0) state.completedCount.toFloat() / totalTasks else 0f
+
+    Column(
         modifier = modifier.fillMaxSize()
-    ){
-        Row (
-            modifier = Modifier.fillMaxWidth().padding(
-                horizontal = 16.dp,
-                vertical = 8.dp
-            ),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ){
+    ) {
+        // Greeting Section
+        GreetingSection()
+
+        Spacer(Modifier.height(16.dp))
+
+        // Progress Hero Card
+        ProgressHeroCard(
+            completedCount = state.completedCount,
+            totalCount = totalTasks,
+            progress = progress
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        // Overview Cards Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             OverViewCard(
-                title = "Tasks Completed",
+                title = "Completed",
                 count = state.completedCount,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                isSuccess = true
             )
-            Spacer(Modifier.width(10.dp))
             OverViewCard(
-                title = "Tasks Remaining",
+                title = "Remaining",
                 count = state.remainingCount,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                isSuccess = false
             )
         }
-        Spacer(Modifier.height(16.dp))
+
+        Spacer(Modifier.height(20.dp))
+
+        // Task List Header
         Text(
             text = "Today's Tasks",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleMedium,
+            color = TaskTheme.colors.subText,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-        Spacer(Modifier.height(16.dp))
+
+        Spacer(Modifier.height(8.dp))
+
+        // Task List
         PullToRefreshBox(
             state = pullToRefreshState,
             onRefresh = onRefresh,
             isRefreshing = isRefreshing,
+            modifier = Modifier.weight(1f)
         ) {
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(state.tasks){task ->
-                    TodayTask(
-                        task = task,
-                        onCheckedChange = {onTaskCheckedChanged(task, it)}
-                    )
+            if (state.tasks.isEmpty()) {
+                EmptyTaskState(
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(state.tasks, key = { it.id }) { task ->
+                        TodayTask(
+                            task = task,
+                            onCheckedChange = { onTaskCheckedChanged(task, it) }
+                        )
+                    }
                 }
             }
-
         }
+
+        // Syncing Indicator
         AnimatedVisibility(isRefreshing) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
                 Icon(
                     imageVector = Icons.Filled.Sync,
                     contentDescription = "Sync",
-                    tint = MaterialTheme.colorScheme.onSurface.copy(.5f),
-                    modifier = Modifier.size(18.dp)
+                    tint = TaskTheme.colors.subText,
+                    modifier = Modifier.size(16.dp)
                 )
-                Spacer(Modifier.width(4.dp))
-                Text(text = "Syncing...", color = MaterialTheme.colorScheme.onSurface.copy(.5f))
-
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = "Syncing...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TaskTheme.colors.subText
+                )
             }
         }
-
-
     }
-
-
 }
 
+//  Greeting Section
+@Composable
+private fun GreetingSection(modifier: Modifier = Modifier) {
+    val currentHour = remember { java.time.LocalTime.now().hour }
+    val greeting = when {
+        currentHour < 12 -> "Good Morning"
+        currentHour < 18 -> "Good Afternoon"
+        else -> "Good Evening"
+    }
+    val today = remember {
+        LocalDate.now().format(
+            DateTimeFormatter.ofPattern("EEEE, dd/MM", Locale("vi"))
+        )
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = today,
+                style = MaterialTheme.typography.bodySmall,
+                color = TaskTheme.colors.subText
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = "$greeting!",
+                style = MaterialTheme.typography.headlineMedium
+            )
+        }
+        // Avatar placeholder
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "B",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+//  Progress Hero Card (circular progress ring)
+@Composable
+private fun ProgressHeroCard(
+    completedCount: Int,
+    totalCount: Int,
+    progress: Float,
+    modifier: Modifier = Modifier
+) {
+    // Animated progress
+    var animationPlayed by remember { mutableStateOf(false) }
+    val animatedProgress by animateFloatAsState(
+        targetValue = if (animationPlayed) progress else 0f,
+        animationSpec = tween(durationMillis = 800),
+        label = "progress"
+    )
+    LaunchedEffect(Unit) { animationPlayed = true }
+
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clip(MaterialTheme.shapes.large)
+            .background(MaterialTheme.colorScheme.primary)
+            .padding(20.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Today's Progress",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .7f)
+                )
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Text(
+                        text = "$completedCount",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = " / $totalCount",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .7f),
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "tasks completed",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .7f)
+                )
+            }
+
+            // Circular Progress Ring
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(72.dp)
+            ) {
+                Canvas(modifier = Modifier.size(72.dp)) {
+                    val strokeWidth = 8.dp.toPx()
+                    val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
+                    val topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
+
+                    // Track
+                    drawArc(
+                        color = primaryColor.copy(alpha = .15f),
+                        startAngle = -90f,
+                        sweepAngle = 360f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+
+                    // Progress
+                    drawArc(
+                        color = primaryColor.copy(alpha = .0f).let {
+                            // White on primary background
+                            androidx.compose.ui.graphics.Color.White
+                        },
+                        startAngle = -90f,
+                        sweepAngle = animatedProgress * 360f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+                }
+
+                Text(
+                    text = "${(animatedProgress * 100).toInt()}%",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+//  Empty State
+@Composable
+private fun EmptyTaskState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "🎉",
+            style = MaterialTheme.typography.displayLarge
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "No tasks for today",
+            style = MaterialTheme.typography.titleMedium,
+            color = TaskTheme.colors.subText
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = "Add a new task to get started!",
+            style = MaterialTheme.typography.bodySmall,
+            color = TaskTheme.colors.subText.copy(alpha = .7f)
+        )
+    }
+}
+
+//  Preview
 @Preview(showSystemUi = true)
 @Composable
 private fun TodayOverViewScreenPrev() {
-//    val dummyTasks = null
     TodayOverViewScreen(
         state = HomeUIState(
-            tasks = dummyTasks
+            tasks = dummyTasks,
+            completedCount = 3,
+            remainingCount = 1
         ),
         onRefresh = {},
-        onTaskCheckedChanged = {_,_ ->},
+        onTaskCheckedChanged = { _, _ -> },
         onSortChanged = {}
     )
 }
