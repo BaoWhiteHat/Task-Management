@@ -57,10 +57,10 @@ fun TodayTask(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(start = 0.dp),
+            .background(MaterialTheme.colorScheme.surfaceVariant),
         verticalAlignment = Alignment.CenterVertically
     ) {
+
         // Priority color bar (left edge)
         Box(
             modifier = Modifier

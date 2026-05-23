@@ -29,7 +29,7 @@ fun TaskApp(modifier: Modifier = Modifier) {
     Scaffold(
         topBar = {
             when(currentRoute){
-                Screen.Home.route -> HomeTopAppBar()
+                Screen.Home.route -> {}
                 Screen.MyTasks.route -> MyTaskTopAppBar()
                 Screen.Calendar.route -> CalendarTopAppBar()
                 Screen.Analytics.route -> AnalyticsTopAppBar()
