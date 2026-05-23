@@ -1,6 +1,5 @@
 package com.example.taskmanagement.presentation.analytics
 
-import android.R.attr.tag
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +7,9 @@ import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.repository.TaskRepository
 import com.example.taskmanagement.di.Graph
 import com.example.taskmanagement.presentation.my_tasks.TaskTag
+import com.example.taskmanagement.presentation.ui.theme.TagHealth
+import com.example.taskmanagement.presentation.ui.theme.TagPersonal
+import com.example.taskmanagement.presentation.ui.theme.TagWork
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -88,20 +90,18 @@ class AnalyticsViewModel(
                     completedInCategory.toFloat() / tasksInCategory.size
                 else 0f
                 val color = when (taskTag) {
-                    TaskTag.WORK -> Color(0xFF4CAF50)
-                    TaskTag.PERSONAL -> Color(0xFF2196F3)
-                    TaskTag.HEALTH -> Color(0xFF9C27B0)
-
+                    TaskTag.WORK -> TagWork
+                    TaskTag.PERSONAL -> TagPersonal
+                    TaskTag.HEALTH -> TagHealth
                 }
                 CategoryData(
-                    name = tag.lowercase(),
+                    name = tag.lowercase().replaceFirstChar { it.uppercase() },
                     percentage = percentage,
                     color = color
                 )
-            }catch (e: IllegalStateException){
+            } catch (e: IllegalStateException) {
                 null
             }
-        }
-            .sortedByDescending { it.percentage }
+        }.sortedByDescending { it.percentage }
     }
 }
