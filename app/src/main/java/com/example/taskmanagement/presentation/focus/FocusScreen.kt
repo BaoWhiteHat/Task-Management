@@ -21,6 +21,7 @@ fun FocusScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadTodayCompletedSessions(context)
+        viewModel.loadGameProfile(context)
     }
 
     var currentPage by rememberSaveable {
@@ -35,11 +36,11 @@ fun FocusScreen(
         FocusPage.SETUP -> {
             FocusSetupScreen(
                 taskTitle = taskTitle,
-                completedSessions = state.completedStudySessions,
-                selectedIndex = state.selectedPresetIndex,
-                isRunning = state.isRunning,
+                state = state,
                 onNavigateBack = onNavigateBack,
                 onSelectPreset = viewModel::selectPreset,
+                onSelectSound = viewModel::selectSound,
+                onUnlockSound = { sound -> viewModel.unlockSound(context, sound) },
                 onStartSession = {
                     currentPage = FocusPage.SESSION
                     viewModel.start(
@@ -66,9 +67,13 @@ fun FocusScreen(
                 },
                 onPause = viewModel::pause,
                 onReset = {
-                    viewModel.reset()
+                    viewModel.requestReset()
+                },
+                onConfirmReset = {
+                    viewModel.reset(context)
                     currentPage = FocusPage.SETUP
                 },
+                onDismissPenalty = viewModel::dismissPenaltyWarning,
                 onSkip = viewModel::skipPhase
             )
         }
