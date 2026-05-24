@@ -40,33 +40,26 @@ fun FocusSetupScreen(
     onStartSession: () -> Unit
 ) {
     val profile = state.gameProfile
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(top = 16.dp, bottom = 100.dp),
+            .padding(top = 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // ── Header: Back + Title + Coins ─────
         HeaderSection(
             coins = profile?.coins ?: 0,
             onNavigateBack = onNavigateBack
         )
-
-        // ── XP Level Bar ─────────────────────
         if (profile != null) {
             XpLevelBar(profile = profile)
         }
-
-        // ── Focusing On Card ─────────────────
         if (taskTitle.isNotBlank()) {
             FocusTaskCard(taskTitle = taskTitle)
         }
-
-        // ── Choose Focus Plan ────────────────
         Text(
             text = "Choose your focus plan",
             style = MaterialTheme.typography.titleMedium,
@@ -77,7 +70,6 @@ fun FocusSetupScreen(
             style = MaterialTheme.typography.bodySmall,
             color = TaskTheme.colors.subText
         )
-
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             focusPresets.forEachIndexed { index, preset ->
                 PresetCard(
@@ -88,8 +80,6 @@ fun FocusSetupScreen(
                 )
             }
         }
-
-        // ── Ambient Sound ────────────────────
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -101,7 +91,6 @@ fun FocusSetupScreen(
                 fontWeight = FontWeight.SemiBold
             )
         }
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -111,25 +100,18 @@ fun FocusSetupScreen(
             ambientSounds.forEach { sound ->
                 val isUnlocked = profile?.hasSound(sound.id) ?: (sound.price == 0)
                 val isSelected = state.selectedSoundId == sound.id
-
                 SoundItem(
                     sound = sound,
                     isUnlocked = isUnlocked,
                     isSelected = isSelected,
                     onClick = {
-                        if (isUnlocked) {
-                            onSelectSound(sound.id)
-                        } else {
-                            onUnlockSound(sound)
-                        }
+                        if (isUnlocked) onSelectSound(sound.id)
+                        else onUnlockSound(sound)
                     }
                 )
             }
         }
-
         Spacer(Modifier.height(4.dp))
-
-        // ── Enter Focus Room Button ──────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -159,11 +141,6 @@ fun FocusSetupScreen(
     }
 }
 
-
-// ─────────────────────────────────────────────
-//  Header: Back + Focus Room + Coin counter
-// ─────────────────────────────────────────────
-
 @Composable
 private fun HeaderSection(
     coins: Int,
@@ -171,42 +148,34 @@ private fun HeaderSection(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        IconButton(
+            onClick = onNavigateBack,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
-            IconButton(
-                onClick = onNavigateBack,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Column {
-                Text(
-                    text = "Focus Room",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "set up your session",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TaskTheme.colors.subText
-                )
-            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = MaterialTheme.colorScheme.onSurface
+            )
         }
-
-        // Coin badge
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Focus Room",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "set up your session",
+                style = MaterialTheme.typography.bodySmall,
+                color = TaskTheme.colors.subText
+            )
+        }
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
@@ -217,10 +186,7 @@ private fun HeaderSection(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = "\uD83E\uDE99",
-                    fontSize = 16.sp
-                )
+                Text(text = "\uD83E\uDE99", fontSize = 16.sp)
                 Text(
                     text = coins.toString(),
                     style = MaterialTheme.typography.titleSmall,
@@ -232,11 +198,6 @@ private fun HeaderSection(
     }
 }
 
-
-// ─────────────────────────────────────────────
-//  XP Level Bar
-// ─────────────────────────────────────────────
-
 @Composable
 private fun XpLevelBar(
     profile: com.example.taskmanagement.data.local.models.GameProfile
@@ -246,7 +207,6 @@ private fun XpLevelBar(
         animationSpec = tween(600),
         label = "xp"
     )
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -282,8 +242,6 @@ private fun XpLevelBar(
                     color = TaskTheme.colors.subText
                 )
             }
-
-            // XP progress bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -299,7 +257,6 @@ private fun XpLevelBar(
                         .background(MaterialTheme.colorScheme.primary)
                 )
             }
-
             Text(
                 text = "${profile.xpForNextLevel - profile.xp} XP to Lv.${profile.level + 1} ${
                     when {
@@ -317,11 +274,6 @@ private fun XpLevelBar(
         }
     }
 }
-
-
-// ─────────────────────────────────────────────
-//  Focusing On Card
-// ─────────────────────────────────────────────
 
 @Composable
 private fun FocusTaskCard(taskTitle: String) {
@@ -349,11 +301,6 @@ private fun FocusTaskCard(taskTitle: String) {
     }
 }
 
-
-// ─────────────────────────────────────────────
-//  Preset Card (with XP + coin reward)
-// ─────────────────────────────────────────────
-
 @Composable
 private fun PresetCard(
     preset: FocusPreset,
@@ -373,7 +320,6 @@ private fun PresetCard(
         animationSpec = tween(200),
         label = "bg"
     )
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -396,7 +342,6 @@ private fun PresetCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Radio dot
                 Box(
                     modifier = Modifier
                         .size(10.dp)
@@ -406,7 +351,6 @@ private fun PresetCard(
                             CircleShape
                         )
                 )
-
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         text = preset.title,
@@ -420,7 +364,6 @@ private fun PresetCard(
                     )
                 }
             }
-
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "${preset.totalMinutes}m",
@@ -445,11 +388,6 @@ private fun PresetCard(
         }
     }
 }
-
-
-// ─────────────────────────────────────────────
-//  Sound Item (circle with lock/unlock)
-// ─────────────────────────────────────────────
 
 @Composable
 private fun SoundItem(
@@ -497,15 +435,12 @@ private fun SoundItem(
                 )
             }
         }
-
         Spacer(Modifier.height(4.dp))
-
         Text(
             text = sound.name,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
         )
-
         Text(
             text = if (isUnlocked) {
                 if (sound.price == 0) "FREE" else "Owned"

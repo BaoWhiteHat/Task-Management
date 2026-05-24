@@ -10,10 +10,6 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.taskmanagement.presentation.components.AnalyticsTopAppBar
-import com.example.taskmanagement.presentation.components.CalendarTopAppBar
-import com.example.taskmanagement.presentation.components.HomeTopAppBar
-import com.example.taskmanagement.presentation.components.MyTaskTopAppBar
 import com.example.taskmanagement.presentation.components.NewTaskTopAppBar
 import com.example.taskmanagement.presentation.navigation.BottomNavigationBar
 import com.example.taskmanagement.presentation.navigation.Screen
@@ -26,21 +22,21 @@ fun TaskApp(modifier: Modifier = Modifier) {
     val currentRoute = navBackStackEntry?.destination?.route
         ?: Screen.Home.route
     val shouldShowBottomBar = currentRoute != Screen.NewTask.route
+            && !currentRoute.startsWith(Screen.Focus.route)
     Scaffold(
         topBar = {
-            when(currentRoute){
-                Screen.Home.route -> {}
-                Screen.MyTasks.route -> {}
-                Screen.Calendar.route -> {}
-                Screen.Analytics.route -> {}
-                Screen.NewTask.route -> NewTaskTopAppBar { navController.popBackStack() }
+            when {
+                currentRoute == Screen.NewTask.route -> {
+                    NewTaskTopAppBar { navController.popBackStack() }
+                }
+                else -> {}
             }
         },
         bottomBar = {
             AnimatedVisibility(shouldShowBottomBar) {
                 BottomNavigationBar(
                     currentRoute = currentRoute,
-                    onNavigate ={route ->
+                    onNavigate = { route ->
                         navController.navigateToSingleTop(route)
                     },
                 )
@@ -53,10 +49,7 @@ fun TaskApp(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(paddingValues)
         )
     }
-
-
 }
-
 
 fun NavHostController.navigateToSingleTop(route: String) {
     navigate(route) {
