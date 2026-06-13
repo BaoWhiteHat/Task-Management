@@ -13,11 +13,17 @@ private enum class FocusPage {
 @Composable
 fun FocusScreen(
     taskTitle: String = "",
+    taskTag: String = "",
+    taskPriority: String = "",
     onNavigateBack: () -> Unit = {},
     viewModel: FocusViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
+
+    val encounter = remember(taskTitle, taskTag, taskPriority) {
+        encounterFromTask(taskTitle, taskTag, taskPriority)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadTodayCompletedSessions(context)
@@ -52,9 +58,10 @@ fun FocusScreen(
         }
 
         FocusPage.SESSION -> {
-            FocusSessionScreen(
+            FocusBattleScreen(
                 state = state,
                 timeText = timeText,
+                encounter = encounter,
                 onBackToSetup = {
                     viewModel.pause()
                     currentPage = FocusPage.SETUP
@@ -92,6 +99,21 @@ fun FocusScreen(
                     context = context,
                     taskTitle = taskTitle
                 )
+            }
+        )
+    }
+
+    if (state.showSessionCompletePopup) {
+        SessionCompleteDialog(
+            onContinue = {
+                viewModel.continueAfterBreak(
+                    context = context,
+                    taskTitle = taskTitle
+                )
+            },
+            onLeave = {
+                viewModel.dismissSessionCompletePopup()
+                onNavigateBack()
             }
         )
     }

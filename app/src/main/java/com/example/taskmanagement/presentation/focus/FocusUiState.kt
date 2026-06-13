@@ -51,7 +51,8 @@ data class FocusUiState(
     val selectedSoundId: String? = "rain",
     val showPenaltyWarning: Boolean = false,
 
-    // Break popup
+    val showSessionCompletePopup: Boolean = false,
+
     val showBreakActivityPopup: Boolean = false,
     val breakActivitySuggestion: BreakActivitySuggestion? = null
 ) {

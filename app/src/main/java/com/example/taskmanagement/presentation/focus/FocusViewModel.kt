@@ -33,6 +33,9 @@ class FocusViewModel : ViewModel() {
     private var gameProfileJob: Job? = null
     private var ambientPlayer: MediaPlayer? = null
 
+    private var rewardXpMultiplier: Float = 1f
+    private var rewardCoinMultiplier: Float = 1f
+
     // Load data
 
     fun loadTodayCompletedSessions(context: Context) {
@@ -66,6 +69,11 @@ class FocusViewModel : ViewModel() {
                 }
             }
         }
+    }
+
+    fun setRewardMultipliers(xpMultiplier: Float, coinMultiplier: Float) {
+        rewardXpMultiplier = xpMultiplier
+        rewardCoinMultiplier = coinMultiplier
     }
 
     // Preset & Sound selection
@@ -166,7 +174,8 @@ class FocusViewModel : ViewModel() {
                 isRunning = false,
                 showBreakActivityPopup = false,
                 breakActivitySuggestion = null,
-                showPenaltyWarning = false
+                showPenaltyWarning = false,
+                showSessionCompletePopup = false
             )
         }
     }
@@ -186,6 +195,17 @@ class FocusViewModel : ViewModel() {
 
     fun dismissPenaltyWarning() {
         _uiState.update { it.copy(showPenaltyWarning = false) }
+    }
+
+    // Session complete popup (sau break)
+
+    fun dismissSessionCompletePopup() {
+        _uiState.update { it.copy(showSessionCompletePopup = false) }
+    }
+
+    fun continueAfterBreak(context: Context, taskTitle: String = "") {
+        _uiState.update { it.copy(showSessionCompletePopup = false) }
+        start(context, taskTitle)
     }
 
     fun skipPhase() {
@@ -234,6 +254,9 @@ class FocusViewModel : ViewModel() {
         val completedStudyNaturally =
             currentState.phase == FocusPhase.STUDY && completedNaturally
 
+        val completedBreakNaturally =
+            currentState.phase == FocusPhase.BREAK && completedNaturally
+
         if (completedStudyNaturally && context != null) {
             saveCompletedFocusSession(
                 context = context,
@@ -254,7 +277,8 @@ class FocusViewModel : ViewModel() {
                 showBreakActivityPopup = completedStudyNaturally,
                 breakActivitySuggestion = if (completedStudyNaturally)
                     getRandomBreakSuggestion(it.breakActivitySuggestion)
-                else it.breakActivitySuggestion
+                else it.breakActivitySuggestion,
+                showSessionCompletePopup = completedBreakNaturally
             )
         }
     }
@@ -265,39 +289,42 @@ class FocusViewModel : ViewModel() {
         val appContext = context.applicationContext
         val dao = AppDatabase.getDatabase(appContext).gameProfileDao()
 
-        val xpReward = if (preset.studyMinutes >= 50) 60 else 30
-        val coinReward = if (preset.studyMinutes >= 50) 20 else 10
-
         viewModelScope.launch {
-            dao.addXp(xpReward)
-            dao.addCoins(coinReward)
 
-            // Check level up
             val profile = _uiState.value.gameProfile ?: return@launch
-            val newXp = profile.xp + xpReward
-            val needed = profile.xpForNextLevel
-            if (newXp >= needed) {
-                dao.levelUp(overflow = newXp - needed)
+
+            val xpReward = (preset.xpReward * rewardXpMultiplier).toInt()
+            val coinReward = (preset.coinReward * rewardCoinMultiplier).toInt()
+
+            var newLevel = profile.level
+            var newXp = profile.xp + xpReward
+            var needed = 100 + (newLevel - 1) * 50            // = xpForNextLevel
+            while (newXp >= needed) {
+                newXp -= needed
+                newLevel += 1
+                needed = 100 + (newLevel - 1) * 50
             }
 
-            // Update streak
+            val newCoins = profile.coins + coinReward
+
             val today = LocalDate.now().toString()
-            if (profile.lastFocusDate != today) {
-                val yesterday = LocalDate.now().minusDays(1).toString()
-                val newStreak = if (profile.lastFocusDate == yesterday)
-                    profile.streakDays + 1 else 1
-                dao.updateProfile(
-                    profile.copy(
-                        lastFocusDate = today,
-                        streakDays = newStreak,
-                        totalSessions = profile.totalSessions + 1
-                    )
-                )
-            } else {
-                dao.updateProfile(
-                    profile.copy(totalSessions = profile.totalSessions + 1)
-                )
+            val yesterday = LocalDate.now().minusDays(1).toString()
+            val newStreak = when (profile.lastFocusDate) {
+                today -> profile.streakDays
+                yesterday -> profile.streakDays + 1
+                else -> 1
             }
+
+            dao.updateProfile(
+                profile.copy(
+                    xp = newXp,
+                    level = newLevel,
+                    coins = newCoins,
+                    lastFocusDate = today,
+                    streakDays = newStreak,
+                    totalSessions = profile.totalSessions + 1
+                )
+            )
         }
     }
 

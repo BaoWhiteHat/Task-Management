@@ -1,7 +1,6 @@
 package com.example.taskmanagement.presentation.navigation
 
-import android.R.attr.label
-import android.R.attr.onClick
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
@@ -22,20 +21,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.taskmanagement.presentation.analytics.AnalyticsScreen
 import com.example.taskmanagement.presentation.calendar.CalendarScreen
+import com.example.taskmanagement.presentation.focus.FocusScreen
 import com.example.taskmanagement.presentation.home.TodayOverViewScreen
 import com.example.taskmanagement.presentation.my_tasks.MyTasksScreen
 import com.example.taskmanagement.presentation.new_task.NewTaskScreen
-import com.example.taskmanagement.presentation.focus.FocusScreen
-import android.net.Uri
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
 
 sealed class Screen(
     val route: String,
@@ -61,17 +58,13 @@ fun BottomNavigationBar(
         containerColor = MaterialTheme.colorScheme.surface
     ) {
         NavigationBarItem(
-            icon = {
-                Icon(imageVector = Icons.Default.Home, contentDescription = "Home")
-            },
+            icon = { Icon(imageVector = Icons.Default.Home, contentDescription = "Home") },
             label = { Text("Home") },
             selected = currentRoute == Screen.Home.route,
             onClick = { onNavigate(Screen.Home.route) }
         )
         NavigationBarItem(
-            icon = {
-                Icon(imageVector = Icons.Default.CalendarMonth, contentDescription = "Calendar")
-            },
+            icon = { Icon(imageVector = Icons.Default.CalendarMonth, contentDescription = "Calendar") },
             label = { Text("Calendar") },
             selected = currentRoute == Screen.Calendar.route,
             onClick = { onNavigate(Screen.Calendar.route) }
@@ -87,31 +80,22 @@ fun BottomNavigationBar(
                 containerColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(56.dp)
             ) {
-                Icon(
-                    Icons.Default.Add, contentDescription = "add tasks"
-                )
+                Icon(Icons.Default.Add, contentDescription = "add tasks")
             }
         }
         NavigationBarItem(
-            icon = {
-                Icon(imageVector = Icons.Default.Analytics, contentDescription = "Analytics")
-            },
+            icon = { Icon(imageVector = Icons.Default.Analytics, contentDescription = "Analytics") },
             label = { Text("Analytics") },
             selected = currentRoute == Screen.Analytics.route,
             onClick = { onNavigate(Screen.Analytics.route) }
         )
         NavigationBarItem(
-            icon = {
-                Icon(imageVector = Icons.Default.Task, contentDescription = "Task")
-            },
+            icon = { Icon(imageVector = Icons.Default.Task, contentDescription = "Task") },
             label = { Text("Task") },
             selected = currentRoute == Screen.MyTasks.route,
             onClick = { onNavigate(Screen.MyTasks.route) }
         )
-
     }
-
-
 }
 
 @Composable
@@ -122,20 +106,19 @@ fun TaskNavigation(
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route,
-    ){
+    ) {
         composable(route = Screen.Home.route) { TodayOverViewScreen(modifier = modifier) }
-        composable(route = Screen.NewTask.route) { NewTaskScreen(modifier = modifier) {  navController.popBackStack()} }
-        composable(route = Screen.MyTasks.route) { MyTasksScreen(modifier = modifier,   navController = navController) }
+        composable(route = Screen.NewTask.route) { NewTaskScreen(modifier = modifier) { navController.popBackStack() } }
+        composable(route = Screen.MyTasks.route) { MyTasksScreen(modifier = modifier, navController = navController) }
         composable(route = Screen.Analytics.route) { AnalyticsScreen(modifier = modifier) }
         composable(route = Screen.Calendar.route) { CalendarScreen(modifier = modifier) }
 
         composable(
-            route = "${Screen.Focus.route}?taskTitle={taskTitle}",
+            route = "${Screen.Focus.route}?taskTitle={taskTitle}&tag={tag}&priority={priority}",
             arguments = listOf(
-                navArgument("taskTitle") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                }
+                navArgument("taskTitle") { type = NavType.StringType; defaultValue = "" },
+                navArgument("tag") { type = NavType.StringType; defaultValue = "" },
+                navArgument("priority") { type = NavType.StringType; defaultValue = "" }
             )
         ) { backStackEntry ->
             val taskTitle = backStackEntry.arguments
@@ -143,13 +126,22 @@ fun TaskNavigation(
                 ?.let { Uri.decode(it) }
                 .orEmpty()
 
+            val tag = backStackEntry.arguments
+                ?.getString("tag")
+                ?.let { Uri.decode(it) }
+                .orEmpty()
+
+            val priority = backStackEntry.arguments
+                ?.getString("priority")
+                ?.let { Uri.decode(it) }
+                .orEmpty()
+
             FocusScreen(
                 taskTitle = taskTitle,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                taskTag = tag,
+                taskPriority = priority,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
-
 }
