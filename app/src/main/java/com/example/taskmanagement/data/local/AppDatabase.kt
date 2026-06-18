@@ -19,7 +19,7 @@ import com.example.taskmanagement.data.local.type_converters.DateTypeConverter
         FocusSession::class,
         GameProfile::class
     ],
-    version = 4,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(DateTypeConverter::class)

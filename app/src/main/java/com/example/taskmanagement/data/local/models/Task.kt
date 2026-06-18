@@ -13,6 +13,8 @@ data class Task(
     val priority: String,
     val reminderEnabled: Boolean,
     val dueDate: LocalDate,
+    val dueHour: Int = 9,
+    val dueMinute: Int = 0,
     val tags: String,
     val isCompleted: Boolean = false,
     val syncStatus: SyncStatus = SyncStatus.CREATED
@@ -25,7 +27,7 @@ val dummyTasks: List<Task> = listOf(
         description = "Draft and finalize the proposal for the new mobile app project, including features and timeline.",
         priority = "High",
         reminderEnabled = true,
-        dueDate = LocalDate.of(2025, 10, 24), // Using LocalDate.of(year, month, day)
+        dueDate = LocalDate.of(2025, 10, 24),
         tags = "Work",
         isCompleted = true
     ),
@@ -37,8 +39,7 @@ val dummyTasks: List<Task> = listOf(
         reminderEnabled = true,
         dueDate = LocalDate.of(2025, 10, 24),
         tags = "Personal",
-
-        ),
+    ),
     Task(
         id = 3,
         title = "Call Mom",
@@ -59,5 +60,4 @@ val dummyTasks: List<Task> = listOf(
         tags = "Health",
         isCompleted = true
     ),
-
-    )
+)

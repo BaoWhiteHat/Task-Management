@@ -30,6 +30,7 @@ import androidx.navigation.navArgument
 import com.example.taskmanagement.presentation.analytics.AnalyticsScreen
 import com.example.taskmanagement.presentation.calendar.CalendarScreen
 import com.example.taskmanagement.presentation.focus.FocusScreen
+import com.example.taskmanagement.presentation.focus.ForestScreen
 import com.example.taskmanagement.presentation.home.TodayOverViewScreen
 import com.example.taskmanagement.presentation.my_tasks.MyTasksScreen
 import com.example.taskmanagement.presentation.new_task.NewTaskScreen
@@ -46,6 +47,7 @@ sealed class Screen(
     object MyTasks : Screen("MyTasks", Icons.Default.Task, title = "My tasks")
 
     object Focus : Screen("focus")
+    object Forest : Screen("forest")
 }
 
 @Composable
@@ -140,8 +142,13 @@ fun TaskNavigation(
                 taskTitle = taskTitle,
                 taskTag = tag,
                 taskPriority = priority,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onOpenForest = { navController.navigate(Screen.Forest.route) }
             )
+        }
+
+        composable(route = Screen.Forest.route) {
+            ForestScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }

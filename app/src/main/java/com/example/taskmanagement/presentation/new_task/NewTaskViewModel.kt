@@ -1,8 +1,5 @@
 package com.example.taskmanagement.presentation.new_task
 
-import android.R.attr.description
-import android.R.attr.priority
-import android.R.attr.tag
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskmanagement.data.local.models.Task
@@ -19,8 +16,10 @@ import java.time.LocalDate
 
 data class NewTaskUiState(
     val title: String = "",
-    val description:String = "",
+    val description: String = "",
     val dueDate: LocalDate = LocalDate.now(),
+    val dueHour: Int = 9,
+    val dueMinute: Int = 0,
     val selectedPriority: Priority = Priority.LOW,
     val selectedTag: TaskTag? = TaskTag.WORK,
     val isReminderEnabled: Boolean = false,
@@ -28,28 +27,29 @@ data class NewTaskUiState(
     val errorMessage: String? = null
 )
 
-class NewTaskViewModel (
+class NewTaskViewModel(
     private val taskRepository: TaskRepository = Graph.repository
-): ViewModel(){
+) : ViewModel() {
     private val _uiState = MutableStateFlow(NewTaskUiState())
     val uiState: StateFlow<NewTaskUiState> = _uiState.asStateFlow()
 
     fun onTitleChange(title: String) = _uiState.update { it.copy(title = title) }
     fun onDescriptionChange(description: String) = _uiState.update { it.copy(description = description) }
     fun onDueDateChange(dueDate: LocalDate) = _uiState.update { it.copy(dueDate = dueDate) }
+    fun onTimeChange(hour: Int, minute: Int) = _uiState.update { it.copy(dueHour = hour, dueMinute = minute) }
     fun onPriorityChange(priority: Priority) = _uiState.update { it.copy(selectedPriority = priority) }
     fun onTagChange(tag: TaskTag) = _uiState.update { it.copy(selectedTag = tag) }
     fun onReminderChange(isEnabled: Boolean) = _uiState.update { it.copy(isReminderEnabled = isEnabled) }
     fun onErrorShown() = _uiState.update { it.copy(errorMessage = null) }
     fun onTaskSavedHandled() = _uiState.update { it.copy(isTaskSaved = false) }
 
-    fun createTask(){
+    fun createTask() {
         val state = uiState.value
-        if (state.title.isBlank()){
+        if (state.title.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Title is required") }
             return
         }
-        if (state.selectedTag == null){
+        if (state.selectedTag == null) {
             _uiState.update { it.copy(errorMessage = "Tag is required") }
             return
         }
@@ -61,6 +61,8 @@ class NewTaskViewModel (
                 priority = state.selectedPriority.name,
                 reminderEnabled = state.isReminderEnabled,
                 dueDate = state.dueDate,
+                dueHour = state.dueHour,
+                dueMinute = state.dueMinute,
                 tags = state.selectedTag.name,
                 isCompleted = false
             )
@@ -68,5 +70,4 @@ class NewTaskViewModel (
             _uiState.update { it.copy(isTaskSaved = true) }
         }
     }
-
 }

@@ -25,25 +25,23 @@ object Graph {
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-
     }
 
     val apiService: TaskApiService by lazy {
         retrofit.create(TaskApiService::class.java)
     }
 
-    fun provide(ctx: Context){
-        repository =
-            _root_ide_package_.com.example.taskmanagement.data.repository.TaskRepositoryImpl(
-                taskDao = AppDatabase.getDatabase(
-                    ctx
-                ).taskDao(),
-                apiService = apiService,
-                workManager = WorkManager.getInstance(ctx)
-            )
+    fun provide(ctx: Context) {
+        repository = TaskRepositoryImpl(
+            taskDao = AppDatabase.getDatabase(ctx).taskDao(),
+            apiService = apiService,
+            workManager = WorkManager.getInstance(ctx),
+            appContext = ctx.applicationContext
+        )
         setPeriodicSyncRequest(ctx)
     }
-    private fun setPeriodicSyncRequest(ctx: Context){
+
+    private fun setPeriodicSyncRequest(ctx: Context) {
         val periodicSyncRequest = PeriodicWorkRequestBuilder<SyncWorker>(
             1,
             TimeUnit.HOURS
@@ -58,8 +56,5 @@ object Graph {
             ExistingPeriodicWorkPolicy.KEEP,
             periodicSyncRequest
         )
-
     }
-
-
 }

@@ -16,6 +16,7 @@ fun FocusScreen(
     taskTag: String = "",
     taskPriority: String = "",
     onNavigateBack: () -> Unit = {},
+    onOpenForest: () -> Unit = {},
     viewModel: FocusViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -47,6 +48,7 @@ fun FocusScreen(
                 onSelectPreset = viewModel::selectPreset,
                 onSelectSound = viewModel::selectSound,
                 onUnlockSound = { sound -> viewModel.unlockSound(context, sound) },
+                onOpenForest = onOpenForest,
                 onStartSession = {
                     currentPage = FocusPage.SESSION
                     viewModel.start(

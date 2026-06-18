@@ -1,6 +1,7 @@
 package com.example.taskmanagement.presentation.new_task
 
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.icu.util.Calendar
 import android.widget.DatePicker
 import androidx.compose.animation.AnimatedContent
@@ -29,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -59,6 +61,7 @@ import com.example.taskmanagement.presentation.my_tasks.Priority
 import com.example.taskmanagement.presentation.my_tasks.TaskTag
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -80,6 +83,7 @@ fun NewTaskScreen(
         onTitleChange = viewModel::onTitleChange,
         onDescriptionChange = viewModel::onDescriptionChange,
         onDueDateChange = viewModel::onDueDateChange,
+        onTimeChange = viewModel::onTimeChange,
         onPriorityChange = viewModel::onPriorityChange,
         onTagChange = viewModel::onTagChange,
         onCreateTask = viewModel::createTask,
@@ -94,6 +98,7 @@ private fun NewTaskScreen(
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onDueDateChange: (LocalDate) -> Unit,
+    onTimeChange: (Int, Int) -> Unit,
     onPriorityChange: (Priority) -> Unit,
     onTagChange: (TaskTag) -> Unit,
     onReminderChange: (Boolean) -> Unit,
@@ -166,8 +171,11 @@ private fun NewTaskScreen(
                 )
                 1 -> StepDatePriority(
                     dueDate = state.dueDate,
+                    dueHour = state.dueHour,
+                    dueMinute = state.dueMinute,
                     selectedPriority = state.selectedPriority,
                     onDueDateChange = onDueDateChange,
+                    onTimeChange = onTimeChange,
                     onPriorityChange = onPriorityChange
                 )
                 2 -> StepTagReminder(
@@ -218,7 +226,6 @@ private fun NewTaskScreen(
     }
 }
 
-//  Step Indicator (progress bar)
 @Composable
 private fun StepIndicator(currentStep: Int, totalSteps: Int) {
     Row(
@@ -240,7 +247,6 @@ private fun StepIndicator(currentStep: Int, totalSteps: Int) {
     }
 }
 
-//  Step 1: Title & Description
 @Composable
 private fun StepTitleDescription(
     title: String,
@@ -295,12 +301,14 @@ private fun StepTitleDescription(
     }
 }
 
-//  Step 2: Due Date & Priority
 @Composable
 private fun StepDatePriority(
     dueDate: LocalDate,
+    dueHour: Int,
+    dueMinute: Int,
     selectedPriority: Priority,
     onDueDateChange: (LocalDate) -> Unit,
+    onTimeChange: (Int, Int) -> Unit,
     onPriorityChange: (Priority) -> Unit
 ) {
     val context = LocalContext.current
@@ -313,6 +321,14 @@ private fun StepDatePriority(
         calendar.get(Calendar.YEAR),
         calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
+    val timePickerDialog = TimePickerDialog(
+        context,
+        { _, hour: Int, minute: Int -> onTimeChange(hour, minute) },
+        dueHour,
+        dueMinute,
+        false
     )
 
     Column(
@@ -341,6 +357,37 @@ private fun StepDatePriority(
                     Icon(
                         imageVector = Icons.Filled.CalendarMonth,
                         contentDescription = "Pick date",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        Text(
+            text = "Due Time",
+            style = MaterialTheme.typography.labelLarge,
+            color = TaskTheme.colors.subText
+        )
+        Spacer(Modifier.height(6.dp))
+        OutlinedTextField(
+            value = LocalTime.of(dueHour, dueMinute).format(DateTimeFormatter.ofPattern("hh:mm a")),
+            onValueChange = {},
+            readOnly = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { timePickerDialog.show() },
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            trailingIcon = {
+                IconButton(onClick = { timePickerDialog.show() }) {
+                    Icon(
+                        imageVector = Icons.Filled.Schedule,
+                        contentDescription = "Pick time",
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -395,7 +442,6 @@ private fun StepDatePriority(
     }
 }
 
-//  Step 3: Tag & Reminder
 @Composable
 private fun StepTagReminder(
     selectedTag: TaskTag?,
@@ -451,7 +497,6 @@ private fun StepTagReminder(
 
         Spacer(Modifier.height(28.dp))
 
-        // Reminder toggle
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -468,7 +513,7 @@ private fun StepTagReminder(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "Get notified before due date",
+                    text = "Notify me at the task's due time",
                     style = MaterialTheme.typography.bodySmall,
                     color = TaskTheme.colors.subText
                 )
@@ -494,6 +539,7 @@ private fun NewTaskScreenPrev() {
         onTitleChange = {},
         onDescriptionChange = {},
         onDueDateChange = {},
+        onTimeChange = { _, _ -> },
         onPriorityChange = {},
         onTagChange = {},
         onReminderChange = {},

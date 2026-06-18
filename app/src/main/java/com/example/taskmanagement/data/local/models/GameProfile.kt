@@ -12,6 +12,7 @@ data class GameProfile(
     val coins: Int = 0,
     val totalSessions: Int = 0,
     val streakDays: Int = 0,
+    val bestStreak: Int = 0,
     val lastFocusDate: String = "",
     val unlockedSounds: String = "rain"
 ) {

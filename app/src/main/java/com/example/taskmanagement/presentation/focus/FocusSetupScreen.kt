@@ -37,6 +37,7 @@ fun FocusSetupScreen(
     onSelectPreset: (Int) -> Unit,
     onSelectSound: (String) -> Unit,
     onUnlockSound: (AmbientSound) -> Unit,
+    onOpenForest: () -> Unit = {},
     onStartSession: () -> Unit
 ) {
     val profile = state.gameProfile
@@ -54,6 +55,7 @@ fun FocusSetupScreen(
             coins = profile?.coins ?: 0,
             onNavigateBack = onNavigateBack
         )
+        ForestButton(onClick = onOpenForest)
         if (profile != null) {
             XpLevelBar(profile = profile)
         }
@@ -138,6 +140,35 @@ fun FocusSetupScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ForestButton(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text("\uD83C\uDF32", fontSize = 18.sp)
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = "My Forest",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "See every tree you've grown",
+                style = MaterialTheme.typography.bodySmall,
+                color = TaskTheme.colors.subText
+            )
+        }
+        Text("\u203A", fontSize = 20.sp, color = TaskTheme.colors.subText)
     }
 }
 
