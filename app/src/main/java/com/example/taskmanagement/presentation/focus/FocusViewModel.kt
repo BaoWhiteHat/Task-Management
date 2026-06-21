@@ -107,9 +107,16 @@ class FocusViewModel : ViewModel() {
         val dao = AppDatabase.getDatabase(appContext).gameProfileDao()
 
         viewModelScope.launch {
-            dao.spendCoins(sound.price)
-            val newSounds = profile.unlockedSounds + ",${sound.id}"
-            dao.updateProfile(profile.copy(unlockedSounds = newSounds))
+            val fresh = _uiState.value.gameProfile ?: return@launch
+            if (fresh.coins < sound.price) return@launch
+            if (fresh.hasSound(sound.id)) return@launch
+
+            dao.updateProfile(
+                fresh.copy(
+                    coins = (fresh.coins - sound.price).coerceAtLeast(0),
+                    unlockedSounds = fresh.unlockedSounds + ",${sound.id}"
+                )
+            )
         }
 
         _uiState.update { it.copy(selectedSoundId = sound.id) }

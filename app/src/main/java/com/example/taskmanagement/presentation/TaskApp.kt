@@ -23,6 +23,11 @@ fun TaskApp(modifier: Modifier = Modifier) {
         ?: Screen.Home.route
     val shouldShowBottomBar = currentRoute != Screen.NewTask.route
             && !currentRoute.startsWith(Screen.Focus.route)
+            && currentRoute != Screen.Forest.route
+            && currentRoute != Screen.Achievements.route
+            && currentRoute != Screen.Story.route
+            && currentRoute != Screen.Shop.route
+
     Scaffold(
         topBar = {
             when {

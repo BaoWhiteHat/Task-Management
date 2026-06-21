@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taskmanagement.R
+import com.example.taskmanagement.presentation.achievements.AchievementsViewModel
+import com.example.taskmanagement.presentation.achievements.CelebrationDialog
 
 private val ForestMono = FontFamily.Monospace
 private val Fire = Color(0xFFFF8A3D)
@@ -38,13 +40,19 @@ private val Fire = Color(0xFFFF8A3D)
 @Composable
 fun ForestScreen(
     onNavigateBack: () -> Unit = {},
-    viewModel: ForestViewModel = viewModel()
+    onOpenAchievements: () -> Unit = {},
+    onOpenStory: () -> Unit = {},
+    onOpenShop: () -> Unit = {},
+    viewModel: ForestViewModel = viewModel(),
+    achievementsViewModel: AchievementsViewModel = viewModel()
 ) {
     val context = LocalContext.current
     LaunchedEffect(Unit) { viewModel.load(context) }
+    LaunchedEffect(Unit) { achievementsViewModel.load(context) }
 
     val sessions by viewModel.sessions.collectAsState()
     val profile by viewModel.profile.collectAsState()
+    val achState by achievementsViewModel.ui.collectAsState()
 
     val streak = profile?.streakDays ?: 0
     val bestStreak = profile?.bestStreak ?: 0
@@ -157,7 +165,28 @@ fun ForestScreen(
                 InfoRow("This week", "${weekSessions.size} sessions · ${fmtTime(weekMinutes)}", divider = true)
                 InfoRow("Coins earned", "\uD83E\uDE99 $coins", divider = false)
             }
+
+            // Achievements entry -> opens AchievementsScreen
+            AchievementsCard(
+                unlocked = achState.unlockedCount,
+                total = achState.totalCount,
+                onClick = onOpenAchievements
+            )
+
+            // The Legend entry -> opens StoryScreen
+            StoryCard(onClick = onOpenStory)
+
+            // Shop entry -> opens ShopScreen
+            ShopCard(onClick = onOpenShop)
         }
+    }
+
+    // Just-unlocked achievements -> show the celebration popup right here
+    if (achState.newlyUnlocked.isNotEmpty()) {
+        CelebrationDialog(
+            items = achState.newlyUnlocked,
+            onDismiss = { achievementsViewModel.consumeNewlyUnlocked() }
+        )
     }
 }
 
@@ -193,6 +222,96 @@ private fun InfoRow(label: String, value: String, divider: Boolean) {
         if (divider) {
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(BorderSubtle))
         }
+    }
+}
+
+@Composable
+private fun AchievementsCard(unlocked: Int, total: Int, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Surface1)
+            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("\uD83C\uDFC6", fontSize = 18.sp)
+            Spacer(Modifier.size(10.dp))
+            Column {
+                Text("Achievements", fontFamily = ForestMono, fontSize = 13.sp, color = TextPrimary)
+                Text(
+                    if (total > 0) "$unlocked / $total unlocked" else "View your badges",
+                    fontFamily = ForestMono,
+                    fontSize = 10.sp,
+                    color = TextMuted
+                )
+            }
+        }
+        Text("\u203A", fontFamily = ForestMono, fontSize = 20.sp, color = AmberAccent)
+    }
+}
+
+@Composable
+private fun StoryCard(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Surface1)
+            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("\uD83D\uDCD6", fontSize = 18.sp)
+            Spacer(Modifier.size(10.dp))
+            Column {
+                Text("The Legend", fontFamily = ForestMono, fontSize = 13.sp, color = TextPrimary)
+                Text(
+                    "Read the story",
+                    fontFamily = ForestMono,
+                    fontSize = 10.sp,
+                    color = TextMuted
+                )
+            }
+        }
+        Text("\u203A", fontFamily = ForestMono, fontSize = 20.sp, color = AmberAccent)
+    }
+}
+
+@Composable
+private fun ShopCard(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Surface1)
+            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("\uD83D\uDED2", fontSize = 18.sp)
+            Spacer(Modifier.size(10.dp))
+            Column {
+                Text("Shop", fontFamily = ForestMono, fontSize = 13.sp, color = TextPrimary)
+                Text(
+                    "Spend coins on backgrounds & sounds",
+                    fontFamily = ForestMono,
+                    fontSize = 10.sp,
+                    color = TextMuted
+                )
+            }
+        }
+        Text("\u203A", fontFamily = ForestMono, fontSize = 20.sp, color = AmberAccent)
     }
 }
 

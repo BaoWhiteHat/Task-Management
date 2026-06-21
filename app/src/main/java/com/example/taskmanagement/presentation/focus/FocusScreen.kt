@@ -47,7 +47,6 @@ fun FocusScreen(
                 onNavigateBack = onNavigateBack,
                 onSelectPreset = viewModel::selectPreset,
                 onSelectSound = viewModel::selectSound,
-                onUnlockSound = { sound -> viewModel.unlockSound(context, sound) },
                 onOpenForest = onOpenForest,
                 onStartSession = {
                     currentPage = FocusPage.SESSION

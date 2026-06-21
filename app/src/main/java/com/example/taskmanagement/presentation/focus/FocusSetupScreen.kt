@@ -36,7 +36,6 @@ fun FocusSetupScreen(
     onNavigateBack: () -> Unit,
     onSelectPreset: (Int) -> Unit,
     onSelectSound: (String) -> Unit,
-    onUnlockSound: (AmbientSound) -> Unit,
     onOpenForest: () -> Unit = {},
     onStartSession: () -> Unit
 ) {
@@ -106,10 +105,7 @@ fun FocusSetupScreen(
                     sound = sound,
                     isUnlocked = isUnlocked,
                     isSelected = isSelected,
-                    onClick = {
-                        if (isUnlocked) onSelectSound(sound.id)
-                        else onUnlockSound(sound)
-                    }
+                    onClick = { if (isUnlocked) onSelectSound(sound.id) }
                 )
             }
         }
@@ -429,7 +425,7 @@ private fun SoundItem(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
+        modifier = Modifier.clickable(enabled = isUnlocked, onClick = onClick)
     ) {
         Box(
             modifier = Modifier
@@ -473,14 +469,14 @@ private fun SoundItem(
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
         )
         Text(
-            text = if (isUnlocked) {
-                if (sound.price == 0) "FREE" else "Owned"
-            } else {
-                "${sound.price}"
+            text = when {
+                isSelected -> "Playing"
+                isUnlocked -> "Owned"
+                else -> "Locked"
             },
             style = MaterialTheme.typography.labelSmall,
             color = if (isUnlocked) TaskTheme.colors.success
-            else TaskTheme.colors.priorityMedium,
+            else TaskTheme.colors.subText,
             fontSize = 10.sp
         )
     }

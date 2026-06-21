@@ -27,10 +27,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.taskmanagement.presentation.achievements.AchievementsScreen
 import com.example.taskmanagement.presentation.analytics.AnalyticsScreen
 import com.example.taskmanagement.presentation.calendar.CalendarScreen
 import com.example.taskmanagement.presentation.focus.FocusScreen
 import com.example.taskmanagement.presentation.focus.ForestScreen
+import com.example.taskmanagement.presentation.focus.StoryScreen
+import com.example.taskmanagement.presentation.shop.ShopScreen
 import com.example.taskmanagement.presentation.home.TodayOverViewScreen
 import com.example.taskmanagement.presentation.my_tasks.MyTasksScreen
 import com.example.taskmanagement.presentation.new_task.NewTaskScreen
@@ -48,6 +51,9 @@ sealed class Screen(
 
     object Focus : Screen("focus")
     object Forest : Screen("forest")
+    object Achievements : Screen("achievements")
+    object Story : Screen("story")
+    object Shop : Screen("shop")
 }
 
 @Composable
@@ -148,7 +154,27 @@ fun TaskNavigation(
         }
 
         composable(route = Screen.Forest.route) {
-            ForestScreen(onNavigateBack = { navController.popBackStack() })
+            ForestScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenAchievements = { navController.navigate(Screen.Achievements.route) },
+                onOpenStory = { navController.navigate(Screen.Story.route) },
+                onOpenShop = { navController.navigate(Screen.Shop.route) }
+            )
+        }
+
+        composable(route = Screen.Achievements.route) {
+            AchievementsScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(route = Screen.Story.route) {
+            StoryScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onBegin = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = Screen.Shop.route) {
+            ShopScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }

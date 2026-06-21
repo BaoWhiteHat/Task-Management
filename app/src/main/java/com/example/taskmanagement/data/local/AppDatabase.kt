@@ -5,9 +5,11 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.example.taskmanagement.data.local.dao.AchievementDao
 import com.example.taskmanagement.data.local.dao.FocusSessionDao
 import com.example.taskmanagement.data.local.dao.GameProfileDao
 import com.example.taskmanagement.data.local.dao.TaskDao
+import com.example.taskmanagement.data.local.models.Achievement
 import com.example.taskmanagement.data.local.models.FocusSession
 import com.example.taskmanagement.data.local.models.GameProfile
 import com.example.taskmanagement.data.local.models.Task
@@ -17,9 +19,10 @@ import com.example.taskmanagement.data.local.type_converters.DateTypeConverter
     entities = [
         Task::class,
         FocusSession::class,
-        GameProfile::class
+        GameProfile::class,
+        Achievement::class
     ],
-    version = 6,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(DateTypeConverter::class)
@@ -28,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun focusSessionDao(): FocusSessionDao
     abstract fun gameProfileDao(): GameProfileDao
+    abstract fun achievementDao(): AchievementDao
 
     companion object {
         @Volatile

@@ -8,13 +8,15 @@ data class GameProfile(
     @PrimaryKey
     val id: Int = 1,
     val xp: Int = 0,
-    val level: Int = 1,
-    val coins: Int = 0,
+    val level: Int = 10,
+    val coins: Int = 1000,
     val totalSessions: Int = 0,
     val streakDays: Int = 0,
     val bestStreak: Int = 0,
     val lastFocusDate: String = "",
-    val unlockedSounds: String = "rain"
+    val unlockedSounds: String = "rain",
+    val unlockedBackgrounds: String = "",
+    val selectedBackgroundId: String = ""
 ) {
     val title: String
         get() = when {
@@ -34,5 +36,9 @@ data class GameProfile(
 
     fun hasSound(soundId: String): Boolean {
         return unlockedSounds.split(",").contains(soundId)
+    }
+
+    fun hasBackground(backgroundId: String): Boolean {
+        return unlockedBackgrounds.split(",").contains(backgroundId)
     }
 }
