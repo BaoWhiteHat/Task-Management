@@ -73,7 +73,7 @@ fun ShopScreen(
     val coins = profile?.coins ?: 0
     val selectedBg = profile?.selectedBackgroundId ?: ""
 
-    var tab by remember { mutableStateOf("bg") } // "bg" | "sound"
+    var tab by remember { mutableStateOf("bg") } // "bg" | "sound" | "tome"
 
     Box(modifier = Modifier.fillMaxSize().background(BgDeep)) {
         Column(
@@ -125,8 +125,9 @@ fun ShopScreen(
                     .padding(3.dp),
                 horizontalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                ShopTab("BACKGROUNDS", tab == "bg", Modifier.weight(1f)) { tab = "bg" }
+                ShopTab("SCENES", tab == "bg", Modifier.weight(1f)) { tab = "bg" }
                 ShopTab("SOUNDS", tab == "sound", Modifier.weight(1f)) { tab = "sound" }
+                ShopTab("TOMES", tab == "tome", Modifier.weight(1f)) { tab = "tome" }
             }
 
             if (tab == "bg") {
@@ -165,7 +166,7 @@ fun ShopScreen(
                     }
                     Spacer(Modifier.height(16.dp))
                 }
-            } else {
+            } else if (tab == "sound") {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -180,6 +181,34 @@ fun ShopScreen(
                             canAfford = coins >= sound.price,
                             onBuy = { viewModel.buySound(context, sound) }
                         )
+                    }
+                    Spacer(Modifier.height(16.dp))
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        "Consumable — used once before a battle. The buff applies when you win.",
+                        fontFamily = Mono,
+                        fontSize = 10.sp,
+                        color = TextDim
+                    )
+                    shopTomes.groupBy { it.category }.forEach { (category, tomes) ->
+                        TomeSectionHeader(category)
+                        tomes.forEach { tome ->
+                            TomeRow(
+                                tome = tome,
+                                owned = profile?.tomeCount(tome.id) ?: 0,
+                                canAfford = coins >= tome.price,
+                                lockedByLevel = (profile?.level ?: 1) < tome.requiredLevel,
+                                onBuy = { viewModel.buyTome(context, tome) }
+                            )
+                        }
                     }
                     Spacer(Modifier.height(16.dp))
                 }
@@ -410,6 +439,110 @@ private fun SoundRow(
                 Spacer(Modifier.width(4.dp))
                 Text(
                     "${sound.price}",
+                    fontFamily = Mono,
+                    fontSize = 12.sp,
+                    color = if (canAfford) AmberAccent else PriceRed
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TomeSectionHeader(text: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text.uppercase(),
+            fontFamily = Mono,
+            fontSize = 10.sp,
+            color = GreenBright,
+            letterSpacing = 1.5.sp
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(BorderSubtle)
+        )
+    }
+}
+
+@Composable
+private fun TomeRow(
+    tome: Tome,
+    owned: Int,
+    canAfford: Boolean,
+    lockedByLevel: Boolean,
+    onBuy: () -> Unit
+) {
+    val context = LocalContext.current
+    val resId = remember(tome.drawableName) {
+        if (tome.drawableName.isBlank()) 0
+        else context.resources.getIdentifier(tome.drawableName, "drawable", context.packageName)
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Surface1)
+            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+            .clickable(enabled = !lockedByLevel && canAfford, onClick = onBuy)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Surface2),
+                contentAlignment = Alignment.Center
+            ) {
+                if (resId != 0) {
+                    Image(
+                        painter = painterResource(resId),
+                        contentDescription = tome.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Text(tome.emoji, fontSize = 20.sp)
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(tome.name, fontFamily = Mono, fontSize = 12.sp, color = TextPrimary, maxLines = 1)
+                    if (owned > 0) {
+                        Spacer(Modifier.width(6.dp))
+                        Text("x$owned", fontFamily = Mono, fontSize = 11.sp, color = GreenBright)
+                    }
+                }
+                Text(tome.desc, fontFamily = Mono, fontSize = 10.sp, color = TextMuted, maxLines = 1)
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        when {
+            lockedByLevel -> Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Lock, "Locked", tint = TextDim, modifier = Modifier.size(12.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Lv ${tome.requiredLevel}", fontFamily = Mono, fontSize = 10.sp, color = TextDim)
+            }
+            else -> Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("\uD83E\uDE99", fontSize = 13.sp)
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    "${tome.price}",
                     fontFamily = Mono,
                     fontSize = 12.sp,
                     color = if (canAfford) AmberAccent else PriceRed

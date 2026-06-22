@@ -8,6 +8,7 @@ import com.example.taskmanagement.data.local.AppDatabase
 import com.example.taskmanagement.data.local.models.FocusSession
 import com.example.taskmanagement.data.local.models.GameProfile
 import com.example.taskmanagement.presentation.focus.utils.SoundPlayer
+import com.example.taskmanagement.presentation.shop.shopTomes
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,6 +97,13 @@ class FocusViewModel : ViewModel() {
 
     fun selectSound(soundId: String) {
         _uiState.update { it.copy(selectedSoundId = soundId) }
+    }
+
+    // Arm a tome for the next battle. Tapping the armed tome again clears it.
+    fun selectTome(tomeId: String) {
+        _uiState.update {
+            it.copy(armedTomeId = if (it.armedTomeId == tomeId) null else tomeId)
+        }
     }
 
     fun unlockSound(context: Context, sound: AmbientSound) {
@@ -300,8 +308,13 @@ class FocusViewModel : ViewModel() {
 
             val profile = _uiState.value.gameProfile ?: return@launch
 
-            val xpReward = (preset.xpReward * rewardXpMultiplier).toInt()
-            val coinReward = (preset.coinReward * rewardCoinMultiplier).toInt()
+            // Apply an armed tome's buff, then consume one (only on a win, which this is).
+            val armedId = _uiState.value.armedTomeId
+            val tome = if (armedId != null) shopTomes.firstOrNull { it.id == armedId } else null
+            val useTome = tome != null && profile.tomeCount(tome.id) > 0
+
+            val xpReward = (preset.xpReward * (if (useTome) tome!!.xpMult else 1f)).toInt()
+            val coinReward = (preset.coinReward * (if (useTome) tome!!.coinMult else 1f)).toInt()
 
             var newLevel = profile.level
             var newXp = profile.xp + xpReward
@@ -329,10 +342,34 @@ class FocusViewModel : ViewModel() {
                     coins = newCoins,
                     lastFocusDate = today,
                     streakDays = newStreak,
-                    totalSessions = profile.totalSessions + 1
+                    totalSessions = profile.totalSessions + 1,
+                    tomeInventory = if (useTome)
+                        decInventory(profile.tomeInventory, tome!!.id)
+                    else profile.tomeInventory
                 )
             )
+
+            if (useTome) {
+                _uiState.update { it.copy(armedTomeId = null) }
+            }
         }
+    }
+
+    // "id:count,..." -> remove one of the given id (drop the entry if it hits 0).
+    private fun decInventory(csv: String, id: String): String {
+        if (csv.isBlank()) return csv
+        val out = StringBuilder()
+        for (part in csv.split(",")) {
+            val kv = part.split(":")
+            if (kv.size != 2) continue
+            var count = kv[1].toIntOrNull() ?: 0
+            if (kv[0] == id) count -= 1
+            if (count > 0) {
+                if (out.isNotEmpty()) out.append(",")
+                out.append("${kv[0]}:$count")
+            }
+        }
+        return out.toString()
     }
 
     private fun applyPenalty(context: Context) {

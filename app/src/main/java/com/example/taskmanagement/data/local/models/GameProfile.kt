@@ -16,7 +16,12 @@ data class GameProfile(
     val lastFocusDate: String = "",
     val unlockedSounds: String = "rain",
     val unlockedBackgrounds: String = "",
-    val selectedBackgroundId: String = ""
+    val selectedBackgroundId: String = "",
+    val tomeInventory: String = "",
+    val lastLoginDate: String = "",
+    val loginStreak: Int = 0
+
+
 ) {
     val title: String
         get() = when {
@@ -40,5 +45,14 @@ data class GameProfile(
 
     fun hasBackground(backgroundId: String): Boolean {
         return unlockedBackgrounds.split(",").contains(backgroundId)
+    }
+
+    fun tomeCount(tomeId: String): Int {
+        if (tomeInventory.isBlank()) return 0
+        for (part in tomeInventory.split(",")) {
+            val kv = part.split(":")
+            if (kv.size == 2 && kv[0] == tomeId) return kv[1].toIntOrNull() ?: 0
+        }
+        return 0
     }
 }

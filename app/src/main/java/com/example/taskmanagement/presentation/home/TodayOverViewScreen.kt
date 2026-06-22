@@ -55,6 +55,7 @@ import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.example.taskmanagement.presentation.rewards.DailyRewardsButton
 
 @Composable
 fun TodayOverViewScreen(
@@ -221,20 +222,27 @@ private fun GreetingSection(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.headlineMedium
             )
         }
-        // Avatar placeholder
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary),
-            contentAlignment = Alignment.Center
+        // Right side: daily rewards button + avatar
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(
-                text = "B",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.SemiBold
-            )
+            DailyRewardsButton()
+            // Avatar placeholder
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "B",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }

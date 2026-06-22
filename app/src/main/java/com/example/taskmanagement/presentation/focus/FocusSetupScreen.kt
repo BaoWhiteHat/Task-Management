@@ -3,6 +3,7 @@ package com.example.taskmanagement.presentation.focus
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,12 +22,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.taskmanagement.presentation.shop.Tome
+import com.example.taskmanagement.presentation.shop.shopTomes
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 
 @Composable
@@ -36,6 +43,7 @@ fun FocusSetupScreen(
     onNavigateBack: () -> Unit,
     onSelectPreset: (Int) -> Unit,
     onSelectSound: (String) -> Unit,
+    onSelectTome: (String) -> Unit,
     onOpenForest: () -> Unit = {},
     onStartSession: () -> Unit
 ) {
@@ -109,6 +117,45 @@ fun FocusSetupScreen(
                 )
             }
         }
+
+        // Battle Tome (consumable buff, applied only on a victory)
+        val ownedTomes = remember(profile?.tomeInventory) {
+            shopTomes.filter { (profile?.tomeCount(it.id) ?: 0) > 0 }
+        }
+        Text(
+            text = "Battle Tome",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        if (ownedTomes.isEmpty()) {
+            Text(
+                text = "No tomes yet — buy consumable buffs in the Shop.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TaskTheme.colors.subText
+            )
+        } else {
+            Text(
+                text = "Arm one tome to boost your next victory. It's spent only if you win.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TaskTheme.colors.subText
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                ownedTomes.forEach { tome ->
+                    TomeChip(
+                        tome = tome,
+                        owned = profile?.tomeCount(tome.id) ?: 0,
+                        isArmed = state.armedTomeId == tome.id,
+                        onClick = { onSelectTome(tome.id) }
+                    )
+                }
+            }
+        }
+
         Spacer(Modifier.height(4.dp))
         Box(
             modifier = Modifier
@@ -479,5 +526,86 @@ private fun SoundItem(
             else TaskTheme.colors.subText,
             fontSize = 10.sp
         )
+    }
+}
+
+@Composable
+private fun TomeChip(
+    tome: Tome,
+    owned: Int,
+    isArmed: Boolean,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val resId = remember(tome.drawableName) {
+        if (tome.drawableName.isBlank()) 0
+        else context.resources.getIdentifier(tome.drawableName, "drawable", context.packageName)
+    }
+    val buffShort = remember(tome.id) {
+        buildString {
+            if (tome.xpMult > 1f) append("+${((tome.xpMult - 1f) * 100).toInt()}% XP")
+            if (tome.coinMult > 1f) {
+                if (isNotEmpty()) append(" \u00B7 ")
+                append("+${((tome.coinMult - 1f) * 100).toInt()}% gold")
+            }
+        }
+    }
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (isArmed) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surfaceVariant
+            )
+            .border(
+                width = if (isArmed) 1.5.dp else 0.5.dp,
+                color = if (isArmed) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.outline.copy(alpha = .3f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surface),
+            contentAlignment = Alignment.Center
+        ) {
+            if (resId != 0) {
+                Image(
+                    painter = painterResource(resId),
+                    contentDescription = tome.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Text(tome.emoji, fontSize = 18.sp)
+            }
+        }
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = tome.name,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = if (isArmed) FontWeight.SemiBold else FontWeight.Medium
+                )
+                Text(
+                    text = "  x$owned",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TaskTheme.colors.subText
+                )
+            }
+            Text(
+                text = if (isArmed) "Armed \u00B7 tap to remove" else buffShort,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isArmed) MaterialTheme.colorScheme.primary
+                else TaskTheme.colors.success,
+                fontSize = 10.sp
+            )
+        }
     }
 }

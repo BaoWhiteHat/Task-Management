@@ -22,7 +22,7 @@ import com.example.taskmanagement.data.local.type_converters.DateTypeConverter
         GameProfile::class,
         Achievement::class
     ],
-    version = 8,
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(DateTypeConverter::class)

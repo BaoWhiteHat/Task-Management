@@ -49,6 +49,7 @@ data class FocusUiState(
     // Game
     val gameProfile: GameProfile? = null,
     val selectedSoundId: String? = "rain",
+    val armedTomeId: String? = null,
     val showPenaltyWarning: Boolean = false,
 
     val showSessionCompletePopup: Boolean = false,

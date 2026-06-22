@@ -75,4 +75,32 @@ class ShopViewModel : ViewModel() {
         csv.split(",").contains(id) -> csv
         else -> "$csv,$id"
     }
+
+    fun buyTome(context: Context, tome: Tome) {
+        val dao = AppDatabase.getDatabase(context.applicationContext).gameProfileDao()
+        viewModelScope.launch {
+            val p = _profile.value ?: return@launch
+            if (p.level < tome.requiredLevel) return@launch
+            if (p.coins < tome.price) return@launch
+            dao.updateProfile(
+                p.copy(
+                    coins = (p.coins - tome.price).coerceAtLeast(0),
+                    tomeInventory = incInventory(p.tomeInventory, tome.id)
+                )
+            )
+        }
+    }
+
+    private fun incInventory(csv: String, id: String): String {
+        val map = LinkedHashMap<String, Int>()
+        if (csv.isNotBlank()) {
+            for (part in csv.split(",")) {
+                val kv = part.split(":")
+                if (kv.size == 2) map[kv[0]] = kv[1].toIntOrNull() ?: 0
+            }
+        }
+        map[id] = (map[id] ?: 0) + 1
+        return map.entries.joinToString(",") { "${it.key}:${it.value}" }
+    }
+
 }

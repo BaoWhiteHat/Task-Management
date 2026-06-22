@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taskmanagement.R
 import kotlin.math.roundToInt
+import com.example.taskmanagement.presentation.shop.shopTomes
 
 private val Pixel = FontFamily.Monospace
 
@@ -259,8 +260,9 @@ private fun EnemyPanel(
     val enemyHp = state.remainingProgress
     val hpPercent = (enemyHp * 100).toInt()
 
-    val rewardXp = state.selectedPreset.xpReward
-    val rewardCoin = state.selectedPreset.coinReward
+    val armedTome = state.armedTomeId?.let { id -> shopTomes.firstOrNull { it.id == id } }
+    val rewardXp = (state.selectedPreset.xpReward * (armedTome?.xpMult ?: 1f)).toInt()
+    val rewardCoin = (state.selectedPreset.coinReward * (armedTome?.coinMult ?: 1f)).toInt()
 
     Box(
         modifier = Modifier

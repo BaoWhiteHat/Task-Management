@@ -14,6 +14,7 @@ import com.example.taskmanagement.presentation.components.NewTaskTopAppBar
 import com.example.taskmanagement.presentation.navigation.BottomNavigationBar
 import com.example.taskmanagement.presentation.navigation.Screen
 import com.example.taskmanagement.presentation.navigation.TaskNavigation
+import com.example.taskmanagement.presentation.rewards.DailyLoginHost
 
 @Composable
 fun TaskApp(modifier: Modifier = Modifier) {
@@ -53,6 +54,7 @@ fun TaskApp(modifier: Modifier = Modifier) {
             navController = navController,
             modifier = Modifier.padding(paddingValues)
         )
+        DailyLoginHost()
     }
 }
 

@@ -47,6 +47,7 @@ fun FocusScreen(
                 onNavigateBack = onNavigateBack,
                 onSelectPreset = viewModel::selectPreset,
                 onSelectSound = viewModel::selectSound,
+                onSelectTome = viewModel::selectTome,
                 onOpenForest = onOpenForest,
                 onStartSession = {
                     currentPage = FocusPage.SESSION
