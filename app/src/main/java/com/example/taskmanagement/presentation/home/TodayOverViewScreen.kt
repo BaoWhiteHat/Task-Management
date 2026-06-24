@@ -55,14 +55,14 @@ import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.foundation.clickable
 import com.example.taskmanagement.presentation.rewards.DailyRewardsButton
-import com.example.taskmanagement.presentation.loot.LootCollectionButton
-import com.example.taskmanagement.presentation.quest.QuestBoardButton
 
 @Composable
 fun TodayOverViewScreen(
     modifier: Modifier = Modifier,
     onStartFocus: () -> Unit = {},
+    onOpenHub: () -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -72,6 +72,7 @@ fun TodayOverViewScreen(
         onTaskCheckedChanged = viewModel::onTaskCheckedChange,
         onSortChanged = viewModel::onSortChanged,
         onStartFocus = onStartFocus,
+        onOpenHub = onOpenHub,
         modifier = modifier
     )
 }
@@ -83,7 +84,8 @@ private fun TodayOverViewScreen(
     onRefresh: () -> Unit,
     onTaskCheckedChanged: (Task, Boolean) -> Unit,
     onSortChanged: (SortOrder) -> Unit,
-    onStartFocus: () -> Unit = {}
+    onStartFocus: () -> Unit = {},
+    onOpenHub: () -> Unit = {}
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     val isRefreshing = state.sycStatus == SyncStatus.SYNCING
@@ -94,7 +96,7 @@ private fun TodayOverViewScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        GreetingSection(onStartFocus = onStartFocus)
+        GreetingSection(onStartFocus = onStartFocus, onOpenHub = onOpenHub)
 
         Spacer(Modifier.height(16.dp))
 
@@ -188,7 +190,11 @@ private fun TodayOverViewScreen(
 }
 
 @Composable
-private fun GreetingSection(modifier: Modifier = Modifier, onStartFocus: () -> Unit = {}) {  // ⟵ thêm tham số
+private fun GreetingSection(
+    modifier: Modifier = Modifier,
+    onStartFocus: () -> Unit = {},
+    onOpenHub: () -> Unit = {}
+) {
     val currentHour = remember { java.time.LocalTime.now().hour }
     val greeting = when {
         currentHour < 12 -> "Good Morning"
@@ -224,14 +230,13 @@ private fun GreetingSection(modifier: Modifier = Modifier, onStartFocus: () -> U
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            QuestBoardButton(onStartFocus = onStartFocus)   // ⟵ truyền callback
-            LootCollectionButton()
             DailyRewardsButton()
             Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable { onOpenHub() },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -316,7 +321,6 @@ private fun ProgressHeroCard(
                     val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
                     val topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
 
-                    // Track
                     drawArc(
                         color = primaryColor.copy(alpha = .15f),
                         startAngle = -90f,

@@ -35,6 +35,7 @@ import com.example.taskmanagement.presentation.focus.ForestScreen
 import com.example.taskmanagement.presentation.focus.StoryScreen
 import com.example.taskmanagement.presentation.shop.ShopScreen
 import com.example.taskmanagement.presentation.home.TodayOverViewScreen
+import com.example.taskmanagement.presentation.hub.HubScreen
 import com.example.taskmanagement.presentation.my_tasks.MyTasksScreen
 import com.example.taskmanagement.presentation.new_task.NewTaskScreen
 import com.example.taskmanagement.presentation.navigateToSingleTop
@@ -55,6 +56,7 @@ sealed class Screen(
     object Achievements : Screen("achievements")
     object Story : Screen("story")
     object Shop : Screen("shop")
+    object Hub : Screen("hub")
 }
 
 @Composable
@@ -119,7 +121,8 @@ fun TaskNavigation(
         composable(route = Screen.Home.route) {
             TodayOverViewScreen(
                 modifier = modifier,
-                onStartFocus = { navController.navigateToSingleTop(Screen.MyTasks.route) }
+                onStartFocus = { navController.navigateToSingleTop(Screen.MyTasks.route) },
+                onOpenHub = { navController.navigate(Screen.Hub.route) }
             )
         }
         composable(route = Screen.NewTask.route) { NewTaskScreen(modifier = modifier) { navController.popBackStack() } }
@@ -181,6 +184,17 @@ fun TaskNavigation(
 
         composable(route = Screen.Shop.route) {
             ShopScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(route = Screen.Hub.route) {
+            HubScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenStory = { navController.navigate(Screen.Story.route) },
+                onOpenAchievements = { navController.navigate(Screen.Achievements.route) },
+                onOpenShop = { navController.navigate(Screen.Shop.route) },
+                onStartFocus = { navController.navigateToSingleTop(Screen.MyTasks.route) }
+
+            )
         }
     }
 }

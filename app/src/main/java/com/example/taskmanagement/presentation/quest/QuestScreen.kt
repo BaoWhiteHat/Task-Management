@@ -54,6 +54,7 @@ import com.example.taskmanagement.presentation.focus.TextMuted
 import com.example.taskmanagement.presentation.focus.TextPrimary
 import com.example.taskmanagement.presentation.loot.LootRarity
 import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.systemBarsPadding
 
 private val Pixel = FontFamily.Monospace
 
@@ -126,12 +127,9 @@ fun QuestBoardDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp)
-                .clip(RoundedCornerShape(20.dp))
                 .background(BgDeep)
-                .border(0.5.dp, GreenDark, RoundedCornerShape(20.dp))
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
 
                 Row(
                     modifier = Modifier

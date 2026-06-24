@@ -43,6 +43,7 @@ import com.example.taskmanagement.presentation.focus.Surface2
 import com.example.taskmanagement.presentation.focus.TextDim
 import com.example.taskmanagement.presentation.focus.TextMuted
 import com.example.taskmanagement.presentation.focus.TextPrimary
+import com.example.taskmanagement.presentation.loot.lootItemById
 import com.example.taskmanagement.presentation.shop.shopBackgrounds
 import com.example.taskmanagement.presentation.shop.shopTomes
 import androidx.compose.foundation.shape.CircleShape
@@ -97,17 +98,17 @@ fun DailyRewardsButton(
         }
     }
 
-    if (open) {
+    if (open || state.visible) {
         DailyLoginDialog(
             state = state,
             onClaim = { viewModel.claim(context) },
-            onClose = { open = false }
+            onClose = { open = false; viewModel.dismiss() }
         )
     }
 }
 
 @Composable
-private fun DailyLoginDialog(
+fun DailyLoginDialog(
     state: DailyLoginState,
     onClaim: () -> Unit,
     onClose: () -> Unit
@@ -154,27 +155,45 @@ private fun DailyLoginDialog(
                 Day7Banner(state = state)
 
                 val claimable = !state.claimedToday
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(if (claimable) GreenBright else Surface2)
-                        .then(
-                            if (claimable) Modifier
-                            else Modifier.border(0.5.dp, BorderSubtle, RoundedCornerShape(14.dp))
+                if (claimable) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(GreenBright)
+                            .clickable(onClick = onClaim)
+                            .padding(vertical = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Claim Day ${state.cycleDay}",
+                            fontFamily = Pixel,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BgDeep,
+                            letterSpacing = 1.sp
                         )
-                        .clickable(onClick = if (claimable) onClaim else onClose)
-                        .padding(vertical = 14.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (claimable) "Claim Day ${state.cycleDay}" else "See you tomorrow!",
-                        fontFamily = Pixel,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (claimable) BgDeep else TextMuted,
-                        letterSpacing = 1.sp
-                    )
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(GreenDark.copy(alpha = 0.18f))
+                            .border(0.5.dp, GreenDark, RoundedCornerShape(12.dp))
+                            .clickable(onClick = onClose)
+                            .padding(vertical = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("\u2713", fontFamily = Pixel, fontSize = 13.sp, color = GreenBright)
+                        Text(
+                            text = "Reward claimed \u00B7 back tomorrow",
+                            fontFamily = Pixel,
+                            fontSize = 11.sp,
+                            color = TextMuted
+                        )
+                    }
                 }
             }
         }
@@ -230,6 +249,7 @@ private fun Day7Banner(state: DailyLoginState) {
     val isToday = state.cycleDay == 7 && !state.claimedToday
     val isClaimed = state.cycleDay == 7 && state.claimedToday
     val tome = reward.tomeId?.let { id -> shopTomes.firstOrNull { it.id == id } }
+    val loot = reward.lootId?.let { id -> lootItemById(id) }
 
     Row(
         modifier = Modifier
@@ -271,6 +291,10 @@ private fun Day7Banner(state: DailyLoginState) {
                         if (isNotEmpty()) append("  +  ")
                         append(tome.name)
                     }
+                    if (loot != null) {
+                        if (isNotEmpty()) append("  +  ")
+                        append(loot.name)
+                    }
                 },
                 fontFamily = Pixel,
                 fontSize = 11.sp,
@@ -286,8 +310,9 @@ private fun Day7Banner(state: DailyLoginState) {
 private fun RewardIcon(reward: LoginReward, size: androidx.compose.ui.unit.Dp) {
     val context = LocalContext.current
     val tome = reward.tomeId?.let { id -> shopTomes.firstOrNull { it.id == id } }
-    // A background reward shows its arena thumbnail; otherwise the tome art.
-    val artName = reward.backgroundId ?: tome?.drawableName
+    val loot = reward.lootId?.let { id -> lootItemById(id) }
+    // Background -> arena art; else tome art; else loot art.
+    val artName = reward.backgroundId ?: tome?.drawableName ?: loot?.drawableName
     val resId = remember(artName) {
         if (artName.isNullOrBlank()) 0
         else context.resources.getIdentifier(artName, "drawable", context.packageName)
@@ -308,6 +333,7 @@ private fun RewardIcon(reward: LoginReward, size: androidx.compose.ui.unit.Dp) {
             )
             reward.backgroundId != null -> Text("\uD83C\uDFDE", fontSize = (size.value * 0.5f).sp)
             tome != null -> Text(tome.emoji, fontSize = (size.value * 0.5f).sp)
+            loot != null -> Text("\uD83D\uDC8E", fontSize = (size.value * 0.5f).sp)
             else -> Text("\uD83E\uDE99", fontSize = (size.value * 0.5f).sp)
         }
     }
@@ -318,6 +344,7 @@ private fun rewardShort(reward: LoginReward): String {
         reward.backgroundId != null -> "Arena"
         reward.tomeId != null && reward.coins > 0 -> "+${reward.coins} +tome"
         reward.tomeId != null -> "Tome"
+        reward.lootId != null -> lootItemById(reward.lootId)?.rarity?.label ?: "Loot"
         else -> "+${reward.coins}"
     }
 }

@@ -58,7 +58,6 @@ fun ForestScreen(
     val bestStreak = profile?.bestStreak ?: 0
     val sessionCount = sessions.size
     val totalMinutes = sessions.sumOf { it.studyMinutes }
-    val coins = profile?.coins ?: 0
 
     val weekCutoff = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
     val weekSessions = sessions.filter { it.completedAtMillis >= weekCutoff }
@@ -69,10 +68,8 @@ fun ForestScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(16.dp)
         ) {
-            // Top bar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -92,96 +89,85 @@ fun ForestScreen(
                 Spacer(Modifier.size(40.dp))
             }
 
-            // Ring + world tree (decorative)
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier.size(210.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val stroke = 10.dp.toPx()
-                        val arcTopLeft = Offset(stroke / 2, stroke / 2)
-                        val arcSize = Size(size.width - stroke, size.height - stroke)
-
-                        // subtle track
-                        drawArc(
-                            color = Color(0xFF17240F),
-                            startAngle = 0f,
-                            sweepAngle = 360f,
-                            useCenter = false,
-                            topLeft = arcTopLeft,
-                            size = arcSize,
-                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = stroke)
-                        )
-                        // smooth, calm ring (start = end color -> no visible seam)
-                        drawArc(
-                            brush = Brush.sweepGradient(
-                                listOf(
-                                    Color(0xFF2E8B6E),
-                                    Color(0xFF4FB87E),
-                                    Color(0xFF7FD89A),
-                                    Color(0xFF4FB87E),
-                                    Color(0xFF2E8B6E)
-                                )
-                            ),
-                            startAngle = -90f,
-                            sweepAngle = 360f,
-                            useCenter = false,
-                            topLeft = arcTopLeft,
-                            size = arcSize,
-                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = stroke)
-                        )
-                    }
-                    Image(
-                        painter = painterResource(R.drawable.tree_stage_8),
-                        contentDescription = "Your world tree",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .padding(bottom = 16.dp)
-                            .height(148.dp)
-                    )
-                }
-            }
-
-            // Primary stat cards
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                StatCell("\uD83D\uDD25", "$streak", "day streak", Fire, Modifier.weight(1f))
-                StatCell("\uD83C\uDF31", "$sessionCount", "sessions done", GreenBright, Modifier.weight(1f))
-                StatCell("\u23F3", fmtTime(totalMinutes), "focused", AmberAccent, Modifier.weight(1f))
-            }
-
-            // Supporting rows
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Surface1)
-                    .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                    .weight(1f)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
             ) {
-                InfoRow("Best streak", "$bestStreak days", divider = true)
-                InfoRow("This week", "${weekSessions.size} sessions · ${fmtTime(weekMinutes)}", divider = true)
-                InfoRow("Coins earned", "\uD83E\uDE99 $coins", divider = false)
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier.size(210.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val stroke = 10.dp.toPx()
+                            val arcTopLeft = Offset(stroke / 2, stroke / 2)
+                            val arcSize = Size(size.width - stroke, size.height - stroke)
+
+                            // subtle track
+                            drawArc(
+                                color = Color(0xFF17240F),
+                                startAngle = 0f,
+                                sweepAngle = 360f,
+                                useCenter = false,
+                                topLeft = arcTopLeft,
+                                size = arcSize,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = stroke)
+                            )
+                            drawArc(
+                                brush = Brush.sweepGradient(
+                                    listOf(
+                                        Color(0xFF2E8B6E),
+                                        Color(0xFF4FB87E),
+                                        Color(0xFF7FD89A),
+                                        Color(0xFF4FB87E),
+                                        Color(0xFF2E8B6E)
+                                    )
+                                ),
+                                startAngle = -90f,
+                                sweepAngle = 360f,
+                                useCenter = false,
+                                topLeft = arcTopLeft,
+                                size = arcSize,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = stroke)
+                            )
+                        }
+                        Image(
+                            painter = painterResource(R.drawable.tree_stage_8),
+                            contentDescription = "Your world tree",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .padding(bottom = 16.dp)
+                                .height(148.dp)
+                        )
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    StatCell("\uD83D\uDD25", "$streak", "day streak", Fire, Modifier.weight(1f))
+                    StatCell("\uD83C\uDF31", "$sessionCount", "sessions done", GreenBright, Modifier.weight(1f))
+                    StatCell("\u23F3", fmtTime(totalMinutes), "focused", AmberAccent, Modifier.weight(1f))
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Surface1)
+                        .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                ) {
+                    InfoRow("Best streak", "$bestStreak days", divider = true)
+                    InfoRow("This week", "${weekSessions.size} sessions · ${fmtTime(weekMinutes)}", divider = true)
+                    InfoRow("\uD83C\uDFC6 Achievements", "${achState.unlockedCount} / ${achState.totalCount}", divider = false)
+                }
             }
-
-            // Achievements entry -> opens AchievementsScreen
-            AchievementsCard(
-                unlocked = achState.unlockedCount,
-                total = achState.totalCount,
-                onClick = onOpenAchievements
-            )
-
-            // The Legend entry -> opens StoryScreen
-            StoryCard(onClick = onOpenStory)
-
-            // Shop entry -> opens ShopScreen
-            ShopCard(onClick = onOpenShop)
         }
     }
 
-    // Just-unlocked achievements -> show the celebration popup right here
     if (achState.newlyUnlocked.isNotEmpty()) {
         CelebrationDialog(
             items = achState.newlyUnlocked,
@@ -222,96 +208,6 @@ private fun InfoRow(label: String, value: String, divider: Boolean) {
         if (divider) {
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(BorderSubtle))
         }
-    }
-}
-
-@Composable
-private fun AchievementsCard(unlocked: Int, total: Int, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Surface1)
-            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("\uD83C\uDFC6", fontSize = 18.sp)
-            Spacer(Modifier.size(10.dp))
-            Column {
-                Text("Achievements", fontFamily = ForestMono, fontSize = 13.sp, color = TextPrimary)
-                Text(
-                    if (total > 0) "$unlocked / $total unlocked" else "View your badges",
-                    fontFamily = ForestMono,
-                    fontSize = 10.sp,
-                    color = TextMuted
-                )
-            }
-        }
-        Text("\u203A", fontFamily = ForestMono, fontSize = 20.sp, color = AmberAccent)
-    }
-}
-
-@Composable
-private fun StoryCard(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Surface1)
-            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("\uD83D\uDCD6", fontSize = 18.sp)
-            Spacer(Modifier.size(10.dp))
-            Column {
-                Text("The Legend", fontFamily = ForestMono, fontSize = 13.sp, color = TextPrimary)
-                Text(
-                    "Read the story",
-                    fontFamily = ForestMono,
-                    fontSize = 10.sp,
-                    color = TextMuted
-                )
-            }
-        }
-        Text("\u203A", fontFamily = ForestMono, fontSize = 20.sp, color = AmberAccent)
-    }
-}
-
-@Composable
-private fun ShopCard(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Surface1)
-            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("\uD83D\uDED2", fontSize = 18.sp)
-            Spacer(Modifier.size(10.dp))
-            Column {
-                Text("Shop", fontFamily = ForestMono, fontSize = 13.sp, color = TextPrimary)
-                Text(
-                    "Spend coins on backgrounds & sounds",
-                    fontFamily = ForestMono,
-                    fontSize = 10.sp,
-                    color = TextMuted
-                )
-            }
-        }
-        Text("\u203A", fontFamily = ForestMono, fontSize = 20.sp, color = AmberAccent)
     }
 }
 

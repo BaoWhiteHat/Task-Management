@@ -64,12 +64,13 @@ class DailyLoginViewModel : ViewModel() {
 
     fun claim(context: Context) {
         val s = _state.value
-        if (s.claimedToday) {        // safety: nothing to claim
+        if (s.claimedToday) {
             _state.value = s.copy(visible = false)
             return
         }
         val reward = loginRewards.firstOrNull { it.day == s.cycleDay } ?: return
-        val dao = AppDatabase.getDatabase(context.applicationContext).gameProfileDao()
+        val db = AppDatabase.getDatabase(context.applicationContext)
+        val dao = db.gameProfileDao()
         viewModelScope.launch {
             val p = dao.getProfile().first() ?: return@launch
             val today = LocalDate.now().toString()
@@ -92,8 +93,9 @@ class DailyLoginViewModel : ViewModel() {
                 loginStreak = s.streak
             )
             dao.updateProfile(updated)
+            if (reward.lootId != null) db.lootInventoryDao().addItem(reward.lootId, 1)
             profile = updated
-            _state.value = s.copy(claimedToday = true)   // stay visible to show the confirmation
+            _state.value = s.copy(claimedToday = true)
         }
     }
 

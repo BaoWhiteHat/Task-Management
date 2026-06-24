@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.taskmanagement.data.local.AppDatabase
 import com.example.taskmanagement.data.local.models.FocusSession
 import com.example.taskmanagement.data.local.models.QuestClaim
+import com.example.taskmanagement.presentation.loot.LootItem
 import com.example.taskmanagement.presentation.loot.rollLootItemOfRarity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,6 +34,11 @@ data class TrackState(
     val bonusClaimable: Boolean
 )
 
+data class ClaimedReward(
+    val coins: Int,
+    val item: LootItem?
+)
+
 data class QuestBoardState(
     val daily: List<QuestUi> = emptyList(),
     val weekly: List<QuestUi> = emptyList(),
@@ -47,6 +53,11 @@ class QuestViewModel : ViewModel() {
 
     private val _coins = MutableStateFlow(0)
     val coins = _coins.asStateFlow()
+
+    private val _claimedReward = MutableStateFlow<ClaimedReward?>(null)
+    val claimedReward = _claimedReward.asStateFlow()
+
+    fun dismissClaimedReward() { _claimedReward.value = null }
 
     val anyClaimable = board
         .map { b ->
@@ -132,9 +143,9 @@ class QuestViewModel : ViewModel() {
 
             db.questClaimDao().claim(QuestClaim(questId = quest.id, periodKey = key))
             if (quest.coins > 0) db.gameProfileDao().addCoins(quest.coins)
-            quest.rewardRarity?.let { rarity ->
-                db.lootInventoryDao().addItem(rollLootItemOfRarity(rarity).id, 1)
-            }
+            val rolled = quest.rewardRarity?.let { rollLootItemOfRarity(it) }
+            rolled?.let { db.lootInventoryDao().addItem(it.id, 1) }
+            _claimedReward.value = ClaimedReward(quest.coins, rolled)
         }
     }
 
@@ -151,7 +162,9 @@ class QuestViewModel : ViewModel() {
 
             db.questClaimDao().claim(QuestClaim(questId = bonus.id, periodKey = key))
             db.gameProfileDao().addCoins(bonus.coins)
-            db.lootInventoryDao().addItem(rollLootItemOfRarity(bonus.rewardRarity).id, 1)
+            val rolled = rollLootItemOfRarity(bonus.rewardRarity)
+            db.lootInventoryDao().addItem(rolled.id, 1)
+            _claimedReward.value = ClaimedReward(bonus.coins, rolled)
         }
     }
 
