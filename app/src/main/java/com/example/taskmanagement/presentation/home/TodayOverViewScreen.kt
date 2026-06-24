@@ -56,10 +56,13 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import com.example.taskmanagement.presentation.rewards.DailyRewardsButton
+import com.example.taskmanagement.presentation.loot.LootCollectionButton
+import com.example.taskmanagement.presentation.quest.QuestBoardButton
 
 @Composable
 fun TodayOverViewScreen(
     modifier: Modifier = Modifier,
+    onStartFocus: () -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -68,6 +71,7 @@ fun TodayOverViewScreen(
         onRefresh = viewModel::onRefresh,
         onTaskCheckedChanged = viewModel::onTaskCheckedChange,
         onSortChanged = viewModel::onSortChanged,
+        onStartFocus = onStartFocus,
         modifier = modifier
     )
 }
@@ -78,7 +82,8 @@ private fun TodayOverViewScreen(
     state: HomeUIState,
     onRefresh: () -> Unit,
     onTaskCheckedChanged: (Task, Boolean) -> Unit,
-    onSortChanged: (SortOrder) -> Unit
+    onSortChanged: (SortOrder) -> Unit,
+    onStartFocus: () -> Unit = {}
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     val isRefreshing = state.sycStatus == SyncStatus.SYNCING
@@ -89,12 +94,10 @@ private fun TodayOverViewScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Greeting Section
-        GreetingSection()
+        GreetingSection(onStartFocus = onStartFocus)
 
         Spacer(Modifier.height(16.dp))
 
-        // Progress Hero Card
         ProgressHeroCard(
             completedCount = state.completedCount,
             totalCount = totalTasks,
@@ -103,7 +106,6 @@ private fun TodayOverViewScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        // Overview Cards Row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -126,7 +128,6 @@ private fun TodayOverViewScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        // Task List Header
         Text(
             text = "Today's Tasks",
             style = MaterialTheme.typography.titleMedium,
@@ -136,7 +137,6 @@ private fun TodayOverViewScreen(
 
         Spacer(Modifier.height(8.dp))
 
-        // Task List
         PullToRefreshBox(
             state = pullToRefreshState,
             onRefresh = onRefresh,
@@ -162,7 +162,6 @@ private fun TodayOverViewScreen(
             }
         }
 
-        // Syncing Indicator
         AnimatedVisibility(isRefreshing) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -188,9 +187,8 @@ private fun TodayOverViewScreen(
     }
 }
 
-//  Greeting Section
 @Composable
-private fun GreetingSection(modifier: Modifier = Modifier) {
+private fun GreetingSection(modifier: Modifier = Modifier, onStartFocus: () -> Unit = {}) {  // ⟵ thêm tham số
     val currentHour = remember { java.time.LocalTime.now().hour }
     val greeting = when {
         currentHour < 12 -> "Good Morning"
@@ -222,13 +220,13 @@ private fun GreetingSection(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.headlineMedium
             )
         }
-        // Right side: daily rewards button + avatar
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            QuestBoardButton(onStartFocus = onStartFocus)   // ⟵ truyền callback
+            LootCollectionButton()
             DailyRewardsButton()
-            // Avatar placeholder
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -247,7 +245,6 @@ private fun GreetingSection(modifier: Modifier = Modifier) {
     }
 }
 
-//  Progress Hero Card (circular progress ring)
 @Composable
 private fun ProgressHeroCard(
     completedCount: Int,
@@ -255,7 +252,6 @@ private fun ProgressHeroCard(
     progress: Float,
     modifier: Modifier = Modifier
 ) {
-    // Animated progress
     var animationPlayed by remember { mutableStateOf(false) }
     val animatedProgress by animateFloatAsState(
         targetValue = if (animationPlayed) progress else 0f,
@@ -311,7 +307,6 @@ private fun ProgressHeroCard(
                 )
             }
 
-            // Circular Progress Ring
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(72.dp)
@@ -332,7 +327,6 @@ private fun ProgressHeroCard(
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
 
-                    // Progress
                     drawArc(
                         color = primaryColor.copy(alpha = .0f).let {
                             // White on primary background
@@ -358,7 +352,6 @@ private fun ProgressHeroCard(
     }
 }
 
-//  Empty State
 @Composable
 private fun EmptyTaskState(modifier: Modifier = Modifier) {
     Column(
@@ -385,7 +378,6 @@ private fun EmptyTaskState(modifier: Modifier = Modifier) {
     }
 }
 
-//  Preview
 @Preview(showSystemUi = true)
 @Composable
 private fun TodayOverViewScreenPrev() {

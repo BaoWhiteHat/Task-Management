@@ -37,6 +37,7 @@ import com.example.taskmanagement.presentation.shop.ShopScreen
 import com.example.taskmanagement.presentation.home.TodayOverViewScreen
 import com.example.taskmanagement.presentation.my_tasks.MyTasksScreen
 import com.example.taskmanagement.presentation.new_task.NewTaskScreen
+import com.example.taskmanagement.presentation.navigateToSingleTop
 
 sealed class Screen(
     val route: String,
@@ -115,7 +116,12 @@ fun TaskNavigation(
         navController = navController,
         startDestination = Screen.Home.route,
     ) {
-        composable(route = Screen.Home.route) { TodayOverViewScreen(modifier = modifier) }
+        composable(route = Screen.Home.route) {
+            TodayOverViewScreen(
+                modifier = modifier,
+                onStartFocus = { navController.navigateToSingleTop(Screen.MyTasks.route) }
+            )
+        }
         composable(route = Screen.NewTask.route) { NewTaskScreen(modifier = modifier) { navController.popBackStack() } }
         composable(route = Screen.MyTasks.route) { MyTasksScreen(modifier = modifier, navController = navController) }
         composable(route = Screen.Analytics.route) { AnalyticsScreen(modifier = modifier) }

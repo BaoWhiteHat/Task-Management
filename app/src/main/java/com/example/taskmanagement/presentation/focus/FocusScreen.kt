@@ -93,6 +93,7 @@ fun FocusScreen(
     if (state.showBreakActivityPopup && suggestion != null) {
         BreakActivityDialog(
             suggestion = suggestion,
+            lootDrop = state.lootDrop,
             onDismiss = viewModel::dismissBreakActivityPopup,
             onAnotherIdea = viewModel::randomizeBreakActivity,
             onStartBreak = {

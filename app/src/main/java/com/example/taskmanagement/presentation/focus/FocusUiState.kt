@@ -1,6 +1,7 @@
 package com.example.taskmanagement.presentation.focus
 
 import com.example.taskmanagement.data.local.models.GameProfile
+import com.example.taskmanagement.presentation.loot.LootItem
 
 enum class FocusPhase {
     STUDY,
@@ -55,7 +56,9 @@ data class FocusUiState(
     val showSessionCompletePopup: Boolean = false,
 
     val showBreakActivityPopup: Boolean = false,
-    val breakActivitySuggestion: BreakActivitySuggestion? = null
+    val breakActivitySuggestion: BreakActivitySuggestion? = null,
+    val lootDrop: LootItem? = null
+
 ) {
     val selectedPreset: FocusPreset
         get() = focusPresets[selectedPresetIndex]

@@ -8,6 +8,7 @@ import com.example.taskmanagement.data.local.AppDatabase
 import com.example.taskmanagement.data.local.models.FocusSession
 import com.example.taskmanagement.data.local.models.GameProfile
 import com.example.taskmanagement.presentation.focus.utils.SoundPlayer
+import com.example.taskmanagement.presentation.loot.rollLootItem
 import com.example.taskmanagement.presentation.shop.shopTomes
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -188,6 +189,7 @@ class FocusViewModel : ViewModel() {
                 timeLeft = preset.studySeconds,
                 isRunning = false,
                 showBreakActivityPopup = false,
+                lootDrop = null,
                 breakActivitySuggestion = null,
                 showPenaltyWarning = false,
                 showSessionCompletePopup = false
@@ -238,7 +240,7 @@ class FocusViewModel : ViewModel() {
     // Break activity popup
 
     fun dismissBreakActivityPopup() {
-        _uiState.update { it.copy(showBreakActivityPopup = false) }
+        _uiState.update { it.copy(showBreakActivityPopup = false, lootDrop = null) }
     }
 
     fun randomizeBreakActivity() {
@@ -352,6 +354,14 @@ class FocusViewModel : ViewModel() {
             if (useTome) {
                 _uiState.update { it.copy(armedTomeId = null) }
             }
+
+            // Loot drop — written to its own table (loot_inventory), independent of
+            // the profile write above (different table, so no stale-snapshot clash).
+            // Shown as a chest in the break dialog.
+            val lootDao = AppDatabase.getDatabase(appContext).lootInventoryDao()
+            val drop = rollLootItem()
+            lootDao.addItem(drop.id, 1)
+            _uiState.update { it.copy(lootDrop = drop) }
         }
     }
 
