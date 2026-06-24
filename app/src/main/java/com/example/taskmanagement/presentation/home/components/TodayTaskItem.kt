@@ -13,8 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,7 +64,6 @@ fun TodayTask(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        // Priority color bar (left edge)
         Box(
             modifier = Modifier
                 .width(4.dp)
@@ -69,7 +71,6 @@ fun TodayTask(
                 .background(priorityColor)
         )
 
-        // Content
         Row(
             modifier = Modifier
                 .weight(1f)
@@ -109,31 +110,51 @@ fun TodayTask(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Tag chip
                     Text(
                         text = task.tags,
                         style = MaterialTheme.typography.labelSmall,
                         color = tagColor
                     )
-                    // Dot separator
                     Box(
                         modifier = Modifier
                             .size(3.dp)
                             .clip(CircleShape)
                             .background(TaskTheme.colors.subText.copy(alpha = .4f))
                     )
-                    // Due date
                     Text(
                         text = task.dueDate.toString(),
                         style = MaterialTheme.typography.labelSmall,
                         color = TaskTheme.colors.subText
                     )
+                    if (task.reminderEnabled) {
+                        Box(
+                            modifier = Modifier
+                                .size(3.dp)
+                                .clip(CircleShape)
+                                .background(TaskTheme.colors.subText.copy(alpha = .4f))
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Notifications,
+                                contentDescription = "Reminder",
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha = .7f),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = formatReminderTime(task.dueHour, task.dueMinute),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = .85f)
+                            )
+                        }
+                    }
                 }
             }
 
             Spacer(Modifier.width(8.dp))
 
-            // Priority badge
             Text(
                 text = task.priority.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
@@ -146,6 +167,12 @@ fun TodayTask(
             )
         }
     }
+}
+
+private fun formatReminderTime(hour: Int, minute: Int): String {
+    val period = if (hour < 12) "AM" else "PM"
+    val h12 = if (hour % 12 == 0) 12 else hour % 12
+    return "%d:%02d %s".format(h12, minute, period)
 }
 
 @Preview

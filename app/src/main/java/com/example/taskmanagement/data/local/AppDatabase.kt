@@ -28,7 +28,7 @@ import com.example.taskmanagement.data.local.type_converters.DateTypeConverter
         LootInventoryItem::class,
         QuestClaim::class
     ],
-    version = 12,
+    version = 13,
     exportSchema = false
 )
 @TypeConverters(DateTypeConverter::class)

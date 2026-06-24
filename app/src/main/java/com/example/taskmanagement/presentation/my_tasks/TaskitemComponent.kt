@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.outlined.Notifications
 
 @Composable
 fun TaskItemComponent(
@@ -73,7 +74,6 @@ fun TaskItemComponent(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Priority color bar
         Box(
             modifier = Modifier
                 .width(4.dp)
@@ -133,12 +133,35 @@ fun TaskItemComponent(
                         style = MaterialTheme.typography.labelSmall,
                         color = TaskTheme.colors.subText
                     )
+                    if (task.reminderEnabled) {
+                        Box(
+                            modifier = Modifier
+                                .size(3.dp)
+                                .clip(CircleShape)
+                                .background(TaskTheme.colors.subText.copy(alpha = .4f))
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Notifications,
+                                contentDescription = "Reminder",
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha = .7f),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = formatReminderTime(task.dueHour, task.dueMinute),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = .85f)
+                            )
+                        }
+                    }
                 }
             }
 
             Spacer(Modifier.width(6.dp))
 
-            // Focus indicator — tap whole card to start focus
             if (onFocusClick != null && !task.isCompleted) {
                 Icon(
                     imageVector = Icons.Outlined.Timer,
@@ -148,7 +171,6 @@ fun TaskItemComponent(
                 )
                 Spacer(Modifier.width(6.dp))
             }
-            // Priority badge
             Text(
                 text = task.priority.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
@@ -161,6 +183,12 @@ fun TaskItemComponent(
             )
         }
     }
+}
+
+private fun formatReminderTime(hour: Int, minute: Int): String {
+    val period = if (hour < 12) "AM" else "PM"
+    val h12 = if (hour % 12 == 0) 12 else hour % 12
+    return "%d:%02d %s".format(h12, minute, period)
 }
 
 @Preview

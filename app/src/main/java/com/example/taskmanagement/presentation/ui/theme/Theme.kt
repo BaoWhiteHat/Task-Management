@@ -10,76 +10,79 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-//  Material Color Schemes
+private val RpgBgDeep       = Color(0xFF081105)
+private val RpgSurface1      = Color(0xFF101C0C)
+private val RpgSurface2      = Color(0xFF162610)
+private val RpgBorderSubtle  = Color(0xFF2D4A1E)
+private val RpgGreenBright   = Color(0xFFB7F34A)
+private val RpgGreenDark     = Color(0xFF4F9A1F)
+private val RpgAmber         = Color(0xFFFFB020)
+private val RpgTextPrimary   = Color(0xFFF2F8E8)
+private val RpgTextMuted     = Color(0xFFA8BB8E)
+private val RpgTextDim       = Color(0xFF587043)
+
+private val RpgScheme = darkColorScheme(
+    primary              = RpgGreenBright,
+    onPrimary            = RpgBgDeep,
+    primaryContainer     = RpgSurface2,
+    onPrimaryContainer   = RpgTextPrimary,
+
+    secondary            = RpgAmber,
+    onSecondary          = RpgBgDeep,
+    secondaryContainer   = RpgSurface2,
+    onSecondaryContainer = RpgTextPrimary,
+
+    tertiary             = RpgGreenDark,
+    onTertiary           = RpgBgDeep,
+    tertiaryContainer    = RpgSurface2,
+    onTertiaryContainer  = RpgTextPrimary,
+
+    background           = RpgBgDeep,
+    onBackground         = RpgTextPrimary,
+
+    surface              = RpgSurface1,
+    onSurface            = RpgTextPrimary,
+    surfaceVariant       = RpgSurface1,
+    onSurfaceVariant     = RpgTextMuted,
+
+    outline              = RpgBorderSubtle,
+    outlineVariant       = RpgBorderSubtle,
+
+    error                = Color(0xFFFF6B6B),
+    onError              = RpgBgDeep,
+    errorContainer       = Color(0xFF3D1515),
+    onErrorContainer     = Color(0xFFFFB4B4),
+)
+
 private val AuroraLightScheme = lightColorScheme(
     primary            = AuroraGreen500,
     onPrimary          = Color.White,
     primaryContainer   = AuroraGreen50,
     onPrimaryContainer = AuroraGreen900,
-
     secondary          = AuroraAmber,
     onSecondary        = Color.White,
     secondaryContainer = AuroraAmberLight,
     onSecondaryContainer = Color(0xFF5C3D10),
-
     tertiary           = TagPersonal,
     onTertiary         = Color.White,
     tertiaryContainer  = TagPersonalBg,
     onTertiaryContainer = Color(0xFF4B1528),
-
     background         = LightBackground,
     onBackground       = LightOnBackground,
-
     surface            = LightSurface,
     onSurface          = LightOnSurface,
     surfaceVariant     = LightSurfaceVar,
     onSurfaceVariant   = LightOnSurfaceVar,
-
     outline            = LightOutline,
     outlineVariant     = LightOutlineVar,
-
     error              = SemanticError,
     onError            = Color.White,
     errorContainer     = SemanticErrorBg,
     onErrorContainer   = Color(0xFF501313),
 )
 
-private val MidnightDarkScheme = darkColorScheme(
-    primary            = MidnightIndigo500,
-    onPrimary          = Color.White,
-    primaryContainer   = MidnightIndigo700,
-    onPrimaryContainer = MidnightIndigo50,
-
-    secondary          = MidnightCoral,
-    onSecondary        = Color.White,
-    secondaryContainer = MidnightCoralDark,
-    onSecondaryContainer = Color(0xFFFFB4A0),
-
-    tertiary           = TagPersonal,
-    onTertiary         = Color.White,
-    tertiaryContainer  = Color(0xFF3D1528),
-    onTertiaryContainer = Color(0xFFF4C0D1),
-
-    background         = DarkBackground,
-    onBackground       = DarkOnBackground,
-
-    surface            = DarkSurface,
-    onSurface          = DarkOnSurface,
-    surfaceVariant     = DarkSurfaceVar,
-    onSurfaceVariant   = DarkOnSurfaceVar,
-
-    outline            = DarkOutline,
-    outlineVariant     = DarkOutlineVar,
-
-    error              = Color(0xFFFF6B6B),
-    onError            = Color.White,
-    errorContainer     = Color(0xFF3D1515),
-    onErrorContainer   = Color(0xFFFFB4B4),
-)
-
 @Immutable
 data class TaskExtendedColors(
-    // Priority
     val priorityHigh: Color,
     val priorityHighBg: Color,
     val priorityMedium: Color,
@@ -87,7 +90,6 @@ data class TaskExtendedColors(
     val priorityLow: Color,
     val priorityLowBg: Color,
 
-    // Tags
     val tagWork: Color,
     val tagWorkBg: Color,
     val tagPersonal: Color,
@@ -97,97 +99,60 @@ data class TaskExtendedColors(
     val tagOther: Color,
     val tagOtherBg: Color,
 
-    // Semantic
     val success: Color,
     val successBg: Color,
     val warning: Color,
     val warningBg: Color,
 
-    // UI đặc biệt
     val subText: Color,
     val cardBg: Color,
     val accentColor: Color,
 )
 
-val LightExtendedColors = TaskExtendedColors(
-    priorityHigh     = PriorityHigh,
-    priorityHighBg   = PriorityHighBg,
-    priorityMedium   = PriorityMedium,
-    priorityMediumBg = PriorityMediumBg,
-    priorityLow      = PriorityLow,
-    priorityLowBg    = PriorityLowBg,
+val RpgExtendedColors = TaskExtendedColors(
+    priorityHigh     = Color(0xFFFF7A6B),
+    priorityHighBg   = Color(0xFF2E1410),
+    priorityMedium   = RpgAmber,
+    priorityMediumBg = Color(0xFF2E2410),
+    priorityLow      = RpgGreenBright,
+    priorityLowBg    = Color(0xFF18260E),
 
-    tagWork        = TagWork,
-    tagWorkBg      = TagWorkBg,
-    tagPersonal    = TagPersonal,
-    tagPersonalBg  = TagPersonalBg,
-    tagHealth      = TagHealth,
-    tagHealthBg    = TagHealthBg,
-    tagOther       = TagOther,
-    tagOtherBg     = TagOtherBg,
-
-    success   = SemanticSuccess,
-    successBg = SemanticSuccessBg,
-    warning   = SemanticWarning,
-    warningBg = SemanticWarningBg,
-
-    subText     = LightSubText,
-    cardBg      = LightCardBg,
-    accentColor = AuroraAmber,
-)
-
-val DarkExtendedColors = TaskExtendedColors(
-    priorityHigh     = PriorityHighDark,
-    priorityHighBg   = PriorityHighBgDark,
-    priorityMedium   = PriorityMediumDark,
-    priorityMediumBg = PriorityMediumBgDark,
-    priorityLow      = PriorityLowDark,
-    priorityLowBg    = PriorityLowBgDark,
-
-    tagWork        = Color(0xFF9BA8F8),
-    tagWorkBg      = Color(0xFF1E2350),
+    tagWork        = Color(0xFF8FB3FF),
+    tagWorkBg      = Color(0xFF14203A),
     tagPersonal    = Color(0xFFED93B1),
-    tagPersonalBg  = Color(0xFF3D1528),
+    tagPersonalBg  = Color(0xFF2E1626),
     tagHealth      = Color(0xFF4DBD94),
-    tagHealthBg    = Color(0xFF0F2E22),
-    tagOther       = Color(0xFFB4B2A9),
-    tagOtherBg     = Color(0xFF2A2A28),
+    tagHealthBg    = Color(0xFF0F2622),
+    tagOther       = RpgTextMuted,
+    tagOtherBg     = RpgSurface2,
 
-    success   = SemanticSuccess,
-    successBg = Color(0xFF0F2E22),
-    warning   = SemanticWarning,
-    warningBg = Color(0xFF3D3410),
+    success   = RpgGreenBright,
+    successBg = Color(0xFF18260E),
+    warning   = RpgAmber,
+    warningBg = Color(0xFF2E2410),
 
-    subText     = DarkSubText,
-    cardBg      = DarkCardBg,
-    accentColor = MidnightCoral,
+    subText     = RpgTextMuted,
+    cardBg      = RpgSurface1,
+    accentColor = RpgAmber,
 )
 
-val LocalExtendedColors = staticCompositionLocalOf { LightExtendedColors }
+val LocalExtendedColors = staticCompositionLocalOf { RpgExtendedColors }
 
-//  Theme Composable
 @Composable
 fun TaskManagementTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) MidnightDarkScheme else AuroraLightScheme
-    val extendedColors = if (darkTheme) DarkExtendedColors else LightExtendedColors
-
     androidx.compose.runtime.CompositionLocalProvider(
-        LocalExtendedColors provides extendedColors
+        LocalExtendedColors provides RpgExtendedColors
     ) {
         MaterialTheme(
-            colorScheme = colorScheme,
+            colorScheme = RpgScheme,
             typography = Typography,
             content = content
         )
     }
 }
-
-//  Helper accessor
-//  TaskTheme.colors.priorityHigh
-//  TaskTheme.colors.tagWork
 
 object TaskTheme {
     val colors: TaskExtendedColors
