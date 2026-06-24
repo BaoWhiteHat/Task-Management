@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -21,6 +22,7 @@ import java.time.LocalDate
 class FocusViewModel : ViewModel() {
 
     companion object {
+        // LUU Y: doi thanh false truoc khi demo/nop bai (true = timer chay nhanh 50x de test)
         private const val FAST_TEST_MODE = true
 
         private val TIMER_TICK_MS: Long
@@ -116,7 +118,7 @@ class FocusViewModel : ViewModel() {
         val dao = AppDatabase.getDatabase(appContext).gameProfileDao()
 
         viewModelScope.launch {
-            val fresh = _uiState.value.gameProfile ?: return@launch
+            val fresh = dao.getProfile().first() ?: return@launch
             if (fresh.coins < sound.price) return@launch
             if (fresh.hasSound(sound.id)) return@launch
 
@@ -332,7 +334,7 @@ class FocusViewModel : ViewModel() {
             val today = LocalDate.now().toString()
             val yesterday = LocalDate.now().minusDays(1).toString()
             val newStreak = when (profile.lastFocusDate) {
-                today -> profile.streakDays
+                today -> profile.streakDays.coerceAtLeast(1)
                 yesterday -> profile.streakDays + 1
                 else -> 1
             }
@@ -344,6 +346,7 @@ class FocusViewModel : ViewModel() {
                     coins = newCoins,
                     lastFocusDate = today,
                     streakDays = newStreak,
+                    bestStreak = maxOf(profile.bestStreak, newStreak),
                     totalSessions = profile.totalSessions + 1,
                     tomeInventory = if (useTome)
                         decInventory(profile.tomeInventory, tome!!.id)

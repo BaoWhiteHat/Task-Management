@@ -122,6 +122,7 @@ fun QuestBoardDialog(
     val list = if (weekly) board.weekly else board.daily
     val track = if (weekly) board.weeklyTrack else board.dailyTrack
     val resetText = remember(weekly) { resetLabel(period) }
+    val claimedReward by viewModel.claimedReward.collectAsState()
 
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(
@@ -200,6 +201,10 @@ fun QuestBoardDialog(
                 }
             }
         }
+    }
+
+    claimedReward?.let { reward ->
+        RewardClaimedDialog(reward = reward, onDismiss = { viewModel.dismissClaimedReward() })
     }
 }
 
@@ -422,5 +427,83 @@ private fun QuestAction(ui: QuestUi, onClaim: () -> Unit, onFocus: () -> Unit) {
                 .padding(horizontal = 16.dp, vertical = 9.dp),
             contentAlignment = Alignment.Center
         ) { Text("Focus \u203A", fontFamily = Pixel, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = GreenBright) }
+    }
+}
+
+@Composable
+private fun RewardClaimedDialog(reward: ClaimedReward, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val item = reward.item
+    val itemRes = remember(item?.drawableName) {
+        val n = item?.drawableName
+        if (n.isNullOrBlank()) 0 else context.resources.getIdentifier(n, "drawable", context.packageName)
+    }
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(BgDeep)
+                .border(0.5.dp, GreenDark, RoundedCornerShape(20.dp))
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text("QUEST COMPLETE", fontFamily = Pixel, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = GreenBright, letterSpacing = 3.sp)
+            Text("Rewards collected", fontFamily = Pixel, fontSize = 10.sp, color = TextMuted)
+
+            if (reward.coins > 0) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("\uD83E\uDE99", fontSize = 18.sp)
+                    Spacer(Modifier.width(8.dp))
+                    Text("+${reward.coins} coins", fontFamily = Pixel, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AmberAccent)
+                }
+            }
+
+            if (item != null) {
+                val rc = rarityColor(item.rarity)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(rc.copy(alpha = 0.10f))
+                        .border(1.dp, rc.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Surface2),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (itemRes != 0) {
+                            Image(
+                                bitmap = ImageBitmap.imageResource(itemRes),
+                                contentDescription = null,
+                                filterQuality = FilterQuality.None,
+                                modifier = Modifier.size(56.dp)
+                            )
+                        } else {
+                            Text("\uD83C\uDF92", fontSize = 32.sp)
+                        }
+                    }
+                    Text(item.name, fontFamily = Pixel, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text(item.rarity.label, fontFamily = Pixel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = rc)
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(GreenBright)
+                    .clickable { onDismiss() }
+                    .padding(vertical = 13.dp),
+                contentAlignment = Alignment.Center
+            ) { Text("Collect", fontFamily = Pixel, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = BgDeep, letterSpacing = 1.sp) }
+        }
     }
 }

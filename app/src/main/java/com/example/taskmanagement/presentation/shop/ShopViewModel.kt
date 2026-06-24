@@ -8,6 +8,7 @@ import com.example.taskmanagement.data.local.models.GameProfile
 import com.example.taskmanagement.presentation.focus.AmbientSound
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ShopViewModel : ViewModel() {
@@ -27,14 +28,13 @@ class ShopViewModel : ViewModel() {
         }
     }
 
-    // Buy a background: deduct coins, add to owned list, auto-equip. All in ONE atomic update.
     fun buyBackground(context: Context, bg: ShopBackground) {
         val dao = AppDatabase.getDatabase(context.applicationContext).gameProfileDao()
         viewModelScope.launch {
-            val p = _profile.value ?: return@launch
-            if (bg.price == 0 || p.hasBackground(bg.id)) return@launch   // already free / owned
-            if (p.level < bg.requiredLevel) return@launch                // level too low
-            if (p.coins < bg.price) return@launch                        // not enough coins
+            val p = dao.getProfile().first() ?: return@launch
+            if (bg.price == 0 || p.hasBackground(bg.id)) return@launch
+            if (p.level < bg.requiredLevel) return@launch
+            if (p.coins < bg.price) return@launch
             dao.updateProfile(
                 p.copy(
                     coins = (p.coins - bg.price).coerceAtLeast(0),
@@ -45,20 +45,18 @@ class ShopViewModel : ViewModel() {
         }
     }
 
-    // Equip a background you already own. id = "" means default day/night scene.
     fun equipBackground(context: Context, id: String) {
         val dao = AppDatabase.getDatabase(context.applicationContext).gameProfileDao()
         viewModelScope.launch {
-            val p = _profile.value ?: return@launch
+            val p = dao.getProfile().first() ?: return@launch
             dao.updateProfile(p.copy(selectedBackgroundId = id))
         }
     }
 
-    // Buy a sound: deduct coins + add to owned list, atomically.
     fun buySound(context: Context, sound: AmbientSound) {
         val dao = AppDatabase.getDatabase(context.applicationContext).gameProfileDao()
         viewModelScope.launch {
-            val p = _profile.value ?: return@launch
+            val p = dao.getProfile().first() ?: return@launch
             if (sound.price == 0 || p.hasSound(sound.id)) return@launch
             if (p.coins < sound.price) return@launch
             dao.updateProfile(
@@ -79,7 +77,7 @@ class ShopViewModel : ViewModel() {
     fun buyTome(context: Context, tome: Tome) {
         val dao = AppDatabase.getDatabase(context.applicationContext).gameProfileDao()
         viewModelScope.launch {
-            val p = _profile.value ?: return@launch
+            val p = dao.getProfile().first() ?: return@launch
             if (p.level < tome.requiredLevel) return@launch
             if (p.coins < tome.price) return@launch
             dao.updateProfile(

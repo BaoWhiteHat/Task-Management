@@ -1,5 +1,6 @@
 package com.example.taskmanagement.presentation.hub
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,8 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,12 +31,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.taskmanagement.R
 import com.example.taskmanagement.presentation.achievements.AchievementsViewModel
 import com.example.taskmanagement.presentation.focus.AmberAccent
 import com.example.taskmanagement.presentation.focus.BgDeep
@@ -94,6 +105,7 @@ fun HubScreen(
                 .statusBarsPadding()
         ) {
 
+            // ---- Top bar ----
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -145,60 +157,27 @@ fun HubScreen(
                 }
             }
 
+            // ---- Scrollable content (top-aligned, no dead space) ----
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // Hero card
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Surface1)
-                        .border(0.5.dp, BorderSubtle, RoundedCornerShape(18.dp))
-                        .padding(16.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(GreenBright),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("$level", fontFamily = Pixel, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = BgDeep)
-                        }
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(title, fontFamily = Pixel, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                            Text("Level $level", fontFamily = Pixel, fontSize = 11.sp, color = TextMuted)
-                        }
-                    }
+                Spacer(Modifier.height(2.dp))
 
-                    Spacer(Modifier.height(14.dp))
+                // ===== HERO SCENE BANNER =====
+                HeroBanner(
+                    level = level,
+                    title = title,
+                    xpProgress = xpProgress,
+                    xp = xp,
+                    xpNext = xpNext
+                )
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(Surface2)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(xpProgress)
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(GreenBright)
-                        )
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text("$xp / $xpNext XP", fontFamily = Pixel, fontSize = 10.sp, color = TextDim)
-                }
-
+                // ADVENTURE
                 Column(modifier = Modifier.fillMaxWidth()) {
                     SectionLabel("ADVENTURE")
                     Spacer(Modifier.height(4.dp))
@@ -224,6 +203,7 @@ fun HubScreen(
                     }
                 }
 
+                // COLLECTION
                 Column(modifier = Modifier.fillMaxWidth()) {
                     SectionLabel("COLLECTION")
                     Spacer(Modifier.height(4.dp))
@@ -250,6 +230,115 @@ fun HubScreen(
             onFocus = { questOpen = false; onStartFocus() }
         )
     }
+}
+
+@Composable
+private fun HeroBanner(
+    level: Int,
+    title: String,
+    xpProgress: Float,
+    xp: Int,
+    xpNext: Int
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .height(236.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .border(0.5.dp, BorderSubtle, RoundedCornerShape(20.dp))
+    ) {
+        Image(
+            painter = painterResource(R.drawable.focus_bg_night),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to Color.Transparent,
+                        0.40f to Color(0x33060D04),
+                        0.75f to Color(0xAA060D04),
+                        1.0f to Color(0xF2060D04)
+                    )
+                )
+        )
+
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                Image(
+                    bitmap = ImageBitmap.imageResource(heroTreeRes(level)),
+                    contentDescription = null,
+                    filterQuality = FilterQuality.None,
+                    modifier = Modifier.height(108.dp)
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xCC060D04))
+                    .padding(horizontal = 14.dp, vertical = 12.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(GreenBright),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("$level", fontFamily = Pixel, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = BgDeep)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(title, fontFamily = Pixel, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text("Level $level", fontFamily = Pixel, fontSize = 11.sp, color = TextMuted)
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0x99162610))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(xpProgress)
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(GreenBright)
+                    )
+                }
+                Spacer(Modifier.height(5.dp))
+                Text("$xp / $xpNext XP", fontFamily = Pixel, fontSize = 10.sp, color = TextMuted)
+            }
+        }
+    }
+}
+
+private fun heroTreeRes(level: Int): Int = when (level.coerceIn(1, 8)) {
+    1 -> R.drawable.tree_stage_1
+    2 -> R.drawable.tree_stage_2
+    3 -> R.drawable.tree_stage_3
+    4 -> R.drawable.tree_stage_4
+    5 -> R.drawable.tree_stage_5
+    6 -> R.drawable.tree_stage_6
+    7 -> R.drawable.tree_stage_7
+    else -> R.drawable.tree_stage_8
 }
 
 @Composable

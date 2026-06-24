@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.models.dummyTasks
+import com.example.taskmanagement.presentation.focus.GreenBright
 import com.example.taskmanagement.presentation.home.components.OverViewCard
 import com.example.taskmanagement.presentation.home.components.TodayTask
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
@@ -265,15 +268,15 @@ private fun ProgressHeroCard(
     )
     LaunchedEffect(Unit) { animationPlayed = true }
 
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+    val accent = GreenBright
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.primary)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(0.5.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.large)
             .padding(20.dp)
     ) {
         Row(
@@ -285,7 +288,7 @@ private fun ProgressHeroCard(
                 Text(
                     text = "Today's Progress",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .7f)
+                    color = Color.White.copy(alpha = .7f)
                 )
                 Spacer(Modifier.height(4.dp))
                 Row(
@@ -294,13 +297,13 @@ private fun ProgressHeroCard(
                     Text(
                         text = "$completedCount",
                         style = MaterialTheme.typography.displaySmall,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = " / $totalCount",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .7f),
+                        color = Color.White.copy(alpha = .6f),
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
@@ -308,7 +311,7 @@ private fun ProgressHeroCard(
                 Text(
                     text = "tasks completed",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .7f)
+                    color = Color.White.copy(alpha = .7f)
                 )
             }
 
@@ -322,7 +325,7 @@ private fun ProgressHeroCard(
                     val topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
 
                     drawArc(
-                        color = primaryColor.copy(alpha = .15f),
+                        color = accent.copy(alpha = .25f),
                         startAngle = -90f,
                         sweepAngle = 360f,
                         useCenter = false,
@@ -332,10 +335,7 @@ private fun ProgressHeroCard(
                     )
 
                     drawArc(
-                        color = primaryColor.copy(alpha = .0f).let {
-                            // White on primary background
-                            androidx.compose.ui.graphics.Color.White
-                        },
+                        color = accent,
                         startAngle = -90f,
                         sweepAngle = animatedProgress * 360f,
                         useCenter = false,
@@ -348,7 +348,7 @@ private fun ProgressHeroCard(
                 Text(
                     text = "${(animatedProgress * 100).toInt()}%",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
             }
