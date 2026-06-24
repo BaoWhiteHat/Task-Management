@@ -216,6 +216,10 @@ class FocusViewModel : ViewModel() {
         _uiState.update { it.copy(showPenaltyWarning = false) }
     }
 
+    fun dismissLevelUp() {
+        _uiState.update { it.copy(levelUp = null) }
+    }
+
     // Session complete popup (sau break)
 
     fun dismissSessionCompletePopup() {
@@ -330,6 +334,7 @@ class FocusViewModel : ViewModel() {
             }
 
             val newCoins = profile.coins + coinReward
+            val leveledUp = newLevel > profile.level
 
             val today = LocalDate.now().toString()
             val yesterday = LocalDate.now().minusDays(1).toString()
@@ -356,6 +361,12 @@ class FocusViewModel : ViewModel() {
 
             if (useTome) {
                 _uiState.update { it.copy(armedTomeId = null) }
+            }
+
+            if (leveledUp) {
+                _uiState.update {
+                    it.copy(levelUp = LevelUpInfo(newLevel, profile.copy(level = newLevel).title))
+                }
             }
 
             // Loot drop — written to its own table (loot_inventory), independent of

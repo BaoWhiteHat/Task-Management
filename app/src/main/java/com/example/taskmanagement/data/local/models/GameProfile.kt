@@ -8,7 +8,7 @@ data class GameProfile(
     @PrimaryKey
     val id: Int = 1,
     val xp: Int = 0,
-    val level: Int = 10,
+    val level: Int = 3,
     val coins: Int = 1000,
     val totalSessions: Int = 0,
     val streakDays: Int = 0,

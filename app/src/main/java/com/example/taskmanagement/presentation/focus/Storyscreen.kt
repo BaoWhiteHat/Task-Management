@@ -67,24 +67,43 @@ private data class StoryBeat(
 
 private val storyBeats = listOf(
     StoryBeat(
+        heading = "THE HEARTWOOD",
+        body = "Before the grey, there was the Heartwood — the Tree of Knowledge. " +
+                "It grew not from soil but from learning: every question asked, every page turned, " +
+                "every mind that held still long enough to understand. Each focused thought rose as " +
+                "a thread of light, and the great Tree drank that light and blazed.",
+        sprite = R.drawable.tree_stage_8
+    ),
+    StoryBeat(
         heading = "THE WITHERING",
-        body = "Long ago the World Tree stood tall, and its leaves kept the realm in balance. " +
-                "But chaos crept in — unfinished quests, broken focus, forgotten promises — " +
-                "and the great tree began to wither.",
+        body = "They named the dark the Withering. Not fire, not flood — forgetting. " +
+                "It fed on idle hours, on scattered minds, on knowledge left to rot unread. " +
+                "The world grew distracted, and fewer and fewer held the light. " +
+                "And one grey dawn, the Tree of Knowledge dimmed — and went out.",
         sprite = R.drawable.tree_dead
     ),
     StoryBeat(
+        heading = "THE SCATTERED TOMES",
+        body = "But the knowledge did not die with the Tree. As it fell, an age of learning " +
+                "burst from its trunk and scattered across the world — a thousand tomes, codices, " +
+                "and grimoires, lost in the ash. The light of the Heartwood, broken into countless " +
+                "pages, waiting in the dark to be found and read again.",
+        sprite = R.drawable.tome_43
+    ),
+    StoryBeat(
         heading = "THE LAST SEEDLING",
-        body = "From the dying roots, a single seedling remains. It feeds on one thing only: " +
-                "your focus. Every task you face takes the form of a foe that must be defeated.",
+        body = "Now the forest stands grey and silent. The guardians are gone, the great canopy " +
+                "is ash. Of all the Heartwood once was, only one thing remains — a single seed, " +
+                "buried in the cold ground.\n\nYou.",
         sprite = R.drawable.tree_stage_1
     ),
     StoryBeat(
         heading = "YOUR QUEST",
-        body = "Each focus session is a battle. Defeat the foe, and your effort becomes light and " +
-                "water for the seedling. Session by session, the World Tree grows once more — " +
-                "and so do you.",
-        sprite = R.drawable.tree_stage_8
+        body = "You are small — a single sprout in the ash. But the Withering fears one thing: " +
+                "a mind that will not scatter. Hold your focus, and light returns to your roots. " +
+                "Recover the lost tomes, read them, and that light becomes a blaze. " +
+                "Grow, little seed — sprout, sapling, oak, and at last something ancient and unbreakable.",
+        sprite = R.drawable.tree_stage_6
     )
 )
 

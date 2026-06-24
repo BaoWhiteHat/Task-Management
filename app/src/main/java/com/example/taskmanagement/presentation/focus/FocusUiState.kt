@@ -40,6 +40,11 @@ val focusPresets = listOf(
     )
 )
 
+data class LevelUpInfo(
+    val level: Int,
+    val title: String
+)
+
 data class FocusUiState(
     val selectedPresetIndex: Int = 0,
     val timeLeft: Int = focusPresets[0].studySeconds,
@@ -57,7 +62,8 @@ data class FocusUiState(
 
     val showBreakActivityPopup: Boolean = false,
     val breakActivitySuggestion: BreakActivitySuggestion? = null,
-    val lootDrop: LootItem? = null
+    val lootDrop: LootItem? = null,
+    val levelUp: LevelUpInfo? = null
 
 ) {
     val selectedPreset: FocusPreset

@@ -90,7 +90,7 @@ fun FocusScreen(
 
     val suggestion = state.breakActivitySuggestion
 
-    if (state.showBreakActivityPopup && suggestion != null) {
+    if (state.showBreakActivityPopup && suggestion != null && state.levelUp == null) {
         BreakActivityDialog(
             suggestion = suggestion,
             lootDrop = state.lootDrop,
@@ -118,6 +118,14 @@ fun FocusScreen(
                 viewModel.dismissSessionCompletePopup()
                 onNavigateBack()
             }
+        )
+    }
+
+    state.levelUp?.let { info ->
+        LevelUpDialog(
+            level = info.level,
+            title = info.title,
+            onDismiss = viewModel::dismissLevelUp
         )
     }
 }
