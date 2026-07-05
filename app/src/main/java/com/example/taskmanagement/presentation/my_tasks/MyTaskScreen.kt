@@ -51,7 +51,7 @@ fun MyTasksScreen(
         onTaskCheckedChange = viewModel::onTaskCheckedChange,
         onFocusClick = { task ->
             navController.navigate(
-                "${Screen.Focus.route}?taskTitle=${Uri.encode(task.title)}" +
+                "${Screen.Focus.route}?taskId=${task.id}&taskTitle=${Uri.encode(task.title)}" +
                         "&tag=${Uri.encode(task.tags)}&priority=${Uri.encode(task.priority)}"
             )
         },

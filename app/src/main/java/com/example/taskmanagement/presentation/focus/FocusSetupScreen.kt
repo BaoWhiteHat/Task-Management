@@ -119,8 +119,8 @@ fun FocusSetupScreen(
         }
 
         // Battle Tome (consumable buff, applied only on a victory)
-        val ownedTomes = remember(profile?.tomeInventory) {
-            shopTomes.filter { (profile?.tomeCount(it.id) ?: 0) > 0 }
+        val ownedTomes = remember(state.tomeCounts) {
+            shopTomes.filter { (state.tomeCounts[it.id] ?: 0) > 0 }
         }
         Text(
             text = "Battle Tome",
@@ -148,7 +148,7 @@ fun FocusSetupScreen(
                 ownedTomes.forEach { tome ->
                     TomeChip(
                         tome = tome,
-                        owned = profile?.tomeCount(tome.id) ?: 0,
+                        owned = state.tomeCounts[tome.id] ?: 0,
                         isArmed = state.armedTomeId == tome.id,
                         onClick = { onSelectTome(tome.id) }
                     )

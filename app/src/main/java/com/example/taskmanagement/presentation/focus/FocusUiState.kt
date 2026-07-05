@@ -55,6 +55,7 @@ data class FocusUiState(
     // Game
     val gameProfile: GameProfile? = null,
     val selectedSoundId: String? = "rain",
+    val tomeCounts: Map<String, Int> = emptyMap(),
     val armedTomeId: String? = null,
     val showPenaltyWarning: Boolean = false,
 

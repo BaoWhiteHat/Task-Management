@@ -3,6 +3,7 @@ package com.example.taskmanagement.presentation.shop
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.example.taskmanagement.data.local.AppDatabase
 import com.example.taskmanagement.data.local.models.GameProfile
 import com.example.taskmanagement.presentation.focus.AmbientSound
@@ -16,15 +17,24 @@ class ShopViewModel : ViewModel() {
     private val _profile = MutableStateFlow<GameProfile?>(null)
     val profile = _profile.asStateFlow()
 
+    private val _tomeCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val tomeCounts = _tomeCounts.asStateFlow()
+
     private var collecting = false
 
     fun load(context: Context) {
         if (collecting) return
         collecting = true
-        val dao = AppDatabase.getDatabase(context.applicationContext).gameProfileDao()
+        val database = AppDatabase.getDatabase(context.applicationContext)
+        val dao = database.gameProfileDao()
         viewModelScope.launch {
             dao.createProfile()
             dao.getProfile().collect { _profile.value = it }
+        }
+        viewModelScope.launch {
+            database.profileTomeDao().observeAll(PROFILE_ID).collect { tomes ->
+                _tomeCounts.value = tomes.associate { it.tomeId to it.count }
+            }
         }
     }
 
@@ -75,30 +85,25 @@ class ShopViewModel : ViewModel() {
     }
 
     fun buyTome(context: Context, tome: Tome) {
-        val dao = AppDatabase.getDatabase(context.applicationContext).gameProfileDao()
+        val database = AppDatabase.getDatabase(context.applicationContext)
         viewModelScope.launch {
-            val p = dao.getProfile().first() ?: return@launch
-            if (p.level < tome.requiredLevel) return@launch
-            if (p.coins < tome.price) return@launch
-            dao.updateProfile(
-                p.copy(
-                    coins = (p.coins - tome.price).coerceAtLeast(0),
-                    tomeInventory = incInventory(p.tomeInventory, tome.id)
-                )
-            )
-        }
-    }
+            database.withTransaction {
+                val dao = database.gameProfileDao()
+                val freshProfile = dao.getProfile().first() ?: return@withTransaction
+                if (freshProfile.level < tome.requiredLevel) return@withTransaction
+                if (freshProfile.coins < tome.price) return@withTransaction
 
-    private fun incInventory(csv: String, id: String): String {
-        val map = LinkedHashMap<String, Int>()
-        if (csv.isNotBlank()) {
-            for (part in csv.split(",")) {
-                val kv = part.split(":")
-                if (kv.size == 2) map[kv[0]] = kv[1].toIntOrNull() ?: 0
+                dao.updateProfile(
+                    freshProfile.copy(
+                        coins = (freshProfile.coins - tome.price).coerceAtLeast(0)
+                    )
+                )
+                database.profileTomeDao().increment(PROFILE_ID, tome.id)
             }
         }
-        map[id] = (map[id] ?: 0) + 1
-        return map.entries.joinToString(",") { "${it.key}:${it.value}" }
     }
 
+    companion object {
+        private const val PROFILE_ID = 1
+    }
 }

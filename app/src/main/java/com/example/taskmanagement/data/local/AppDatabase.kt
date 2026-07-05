@@ -9,12 +9,14 @@ import com.example.taskmanagement.data.local.dao.AchievementDao
 import com.example.taskmanagement.data.local.dao.FocusSessionDao
 import com.example.taskmanagement.data.local.dao.GameProfileDao
 import com.example.taskmanagement.data.local.dao.LootInventoryDao
+import com.example.taskmanagement.data.local.dao.ProfileTomeDao
 import com.example.taskmanagement.data.local.dao.QuestClaimDao
 import com.example.taskmanagement.data.local.dao.TaskDao
 import com.example.taskmanagement.data.local.models.Achievement
 import com.example.taskmanagement.data.local.models.FocusSession
 import com.example.taskmanagement.data.local.models.GameProfile
 import com.example.taskmanagement.data.local.models.LootInventoryItem
+import com.example.taskmanagement.data.local.models.ProfileTome
 import com.example.taskmanagement.data.local.models.QuestClaim
 import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.type_converters.DateTypeConverter
@@ -26,9 +28,10 @@ import com.example.taskmanagement.data.local.type_converters.DateTypeConverter
         GameProfile::class,
         Achievement::class,
         LootInventoryItem::class,
+        ProfileTome::class,
         QuestClaim::class
     ],
-    version = 13,
+    version = 16,
     exportSchema = false
 )
 @TypeConverters(DateTypeConverter::class)
@@ -39,6 +42,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun gameProfileDao(): GameProfileDao
     abstract fun achievementDao(): AchievementDao
     abstract fun lootInventoryDao(): LootInventoryDao
+    abstract fun profileTomeDao(): ProfileTomeDao
     abstract fun questClaimDao(): QuestClaimDao
 
     companion object {

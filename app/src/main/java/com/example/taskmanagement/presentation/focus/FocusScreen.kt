@@ -12,6 +12,7 @@ private enum class FocusPage {
 
 @Composable
 fun FocusScreen(
+    taskId: Int? = null,
     taskTitle: String = "",
     taskTag: String = "",
     taskPriority: String = "",
@@ -53,6 +54,7 @@ fun FocusScreen(
                     currentPage = FocusPage.SESSION
                     viewModel.start(
                         context = context,
+                        selectedTaskId = taskId,
                         taskTitle = taskTitle
                     )
                 }
@@ -71,6 +73,7 @@ fun FocusScreen(
                 onStart = {
                     viewModel.start(
                         context = context,
+                        selectedTaskId = taskId,
                         taskTitle = taskTitle
                     )
                 },
@@ -100,6 +103,7 @@ fun FocusScreen(
                 viewModel.dismissBreakActivityPopup()
                 viewModel.start(
                     context = context,
+                    selectedTaskId = taskId,
                     taskTitle = taskTitle
                 )
             }
@@ -111,6 +115,7 @@ fun FocusScreen(
             onContinue = {
                 viewModel.continueAfterBreak(
                     context = context,
+                    selectedTaskId = taskId,
                     taskTitle = taskTitle
                 )
             },

@@ -17,6 +17,7 @@ data class GameProfile(
     val unlockedSounds: String = "rain",
     val unlockedBackgrounds: String = "",
     val selectedBackgroundId: String = "",
+    // Legacy prototype column. Active tome inventory is stored in profile_tomes.
     val tomeInventory: String = "",
     val lastLoginDate: String = "",
     val loginStreak: Int = 0
@@ -47,12 +48,4 @@ data class GameProfile(
         return unlockedBackgrounds.split(",").contains(backgroundId)
     }
 
-    fun tomeCount(tomeId: String): Int {
-        if (tomeInventory.isBlank()) return 0
-        for (part in tomeInventory.split(",")) {
-            val kv = part.split(":")
-            if (kv.size == 2 && kv[0] == tomeId) return kv[1].toIntOrNull() ?: 0
-        }
-        return 0
-    }
 }

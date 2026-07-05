@@ -3,6 +3,7 @@ package com.example.taskmanagement.presentation.rewards
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.example.taskmanagement.data.local.AppDatabase
 import com.example.taskmanagement.data.local.models.GameProfile
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,29 +73,39 @@ class DailyLoginViewModel : ViewModel() {
         val db = AppDatabase.getDatabase(context.applicationContext)
         val dao = db.gameProfileDao()
         viewModelScope.launch {
-            val p = dao.getProfile().first() ?: return@launch
             val today = LocalDate.now().toString()
-            if (p.lastLoginDate == today) {
-                profile = p
-                _state.value = s.copy(claimedToday = true)
-                return@launch
+            var resultingProfile: GameProfile? = null
+
+            db.withTransaction {
+                val freshProfile = dao.getProfile().first() ?: return@withTransaction
+                if (freshProfile.lastLoginDate == today) {
+                    resultingProfile = freshProfile
+                    return@withTransaction
+                }
+
+                val newBackgrounds =
+                    if (reward.backgroundId != null) {
+                        appendId(freshProfile.unlockedBackgrounds, reward.backgroundId)
+                    } else {
+                        freshProfile.unlockedBackgrounds
+                    }
+                val updated = freshProfile.copy(
+                    coins = freshProfile.coins + reward.coins,
+                    unlockedBackgrounds = newBackgrounds,
+                    lastLoginDate = today,
+                    loginStreak = s.streak
+                )
+                dao.updateProfile(updated)
+                if (reward.tomeId != null) {
+                    db.profileTomeDao().increment(PROFILE_ID, reward.tomeId)
+                }
+                if (reward.lootId != null) {
+                    db.lootInventoryDao().addItem(reward.lootId, 1)
+                }
+                resultingProfile = updated
             }
-            val newInventory =
-                if (reward.tomeId != null) incInventory(p.tomeInventory, reward.tomeId)
-                else p.tomeInventory
-            val newBackgrounds =
-                if (reward.backgroundId != null) appendId(p.unlockedBackgrounds, reward.backgroundId)
-                else p.unlockedBackgrounds
-            val updated = p.copy(
-                coins = p.coins + reward.coins,
-                tomeInventory = newInventory,
-                unlockedBackgrounds = newBackgrounds,
-                lastLoginDate = today,
-                loginStreak = s.streak
-            )
-            dao.updateProfile(updated)
-            if (reward.lootId != null) db.lootInventoryDao().addItem(reward.lootId, 1)
-            profile = updated
+
+            profile = resultingProfile ?: return@launch
             _state.value = s.copy(claimedToday = true)
         }
     }
@@ -109,15 +120,7 @@ class DailyLoginViewModel : ViewModel() {
         else -> "$csv,$id"
     }
 
-    private fun incInventory(csv: String, id: String): String {
-        val map = LinkedHashMap<String, Int>()
-        if (csv.isNotBlank()) {
-            for (part in csv.split(",")) {
-                val kv = part.split(":")
-                if (kv.size == 2) map[kv[0]] = kv[1].toIntOrNull() ?: 0
-            }
-        }
-        map[id] = (map[id] ?: 0) + 1
-        return map.entries.joinToString(",") { "${it.key}:${it.value}" }
+    companion object {
+        private const val PROFILE_ID = 1
     }
 }

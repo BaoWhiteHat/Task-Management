@@ -39,6 +39,10 @@ interface TaskDao {
 
     @Query("SELECT * FROM tasks WHERE syncStatus != 'SYNCED'")
     suspend fun getDirtyTasks(): List<Task>
+
+    @Query("SELECT id FROM tasks WHERE id = :taskId LIMIT 1")
+    suspend fun findExistingId(taskId: Int): Int?
+
     // crud Op
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(task: Task): Long

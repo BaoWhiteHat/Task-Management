@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.MediaPlayer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.example.taskmanagement.data.local.AppDatabase
 import com.example.taskmanagement.data.local.models.FocusSession
 import com.example.taskmanagement.data.local.models.GameProfile
@@ -24,6 +25,7 @@ class FocusViewModel : ViewModel() {
     companion object {
         // LUU Y: doi thanh false truoc khi demo/nop bai (true = timer chay nhanh 50x de test)
         private const val FAST_TEST_MODE = true
+        private const val PROFILE_ID = 1
 
         private val TIMER_TICK_MS: Long
             get() = if (FAST_TEST_MODE) 20L else 1000L
@@ -35,7 +37,9 @@ class FocusViewModel : ViewModel() {
     private var timerJob: Job? = null
     private var completedSessionsJob: Job? = null
     private var gameProfileJob: Job? = null
+    private var profileTomesJob: Job? = null
     private var ambientPlayer: MediaPlayer? = null
+    private var selectedTaskId: Int? = null
 
     private var rewardXpMultiplier: Float = 1f
     private var rewardCoinMultiplier: Float = 1f
@@ -58,10 +62,11 @@ class FocusViewModel : ViewModel() {
     }
 
     fun loadGameProfile(context: Context) {
-        if (gameProfileJob != null) return
+        if (gameProfileJob != null || profileTomesJob != null) return
 
         val appContext = context.applicationContext
-        val dao = AppDatabase.getDatabase(appContext).gameProfileDao()
+        val database = AppDatabase.getDatabase(appContext)
+        val dao = database.gameProfileDao()
 
         gameProfileJob = viewModelScope.launch {
             dao.createProfile()
@@ -70,6 +75,20 @@ class FocusViewModel : ViewModel() {
                     _uiState.update { state ->
                         state.copy(gameProfile = it)
                     }
+                }
+            }
+        }
+
+        profileTomesJob = viewModelScope.launch {
+            database.profileTomeDao().observeAll(PROFILE_ID).collect { tomes ->
+                val tomeCounts = tomes.associate { it.tomeId to it.count }
+                _uiState.update { state ->
+                    state.copy(
+                        tomeCounts = tomeCounts,
+                        armedTomeId = state.armedTomeId?.takeIf {
+                            (tomeCounts[it] ?: 0) > 0
+                        }
+                    )
                 }
             }
         }
@@ -104,8 +123,13 @@ class FocusViewModel : ViewModel() {
 
     // Arm a tome for the next battle. Tapping the armed tome again clears it.
     fun selectTome(tomeId: String) {
-        _uiState.update {
-            it.copy(armedTomeId = if (it.armedTomeId == tomeId) null else tomeId)
+        _uiState.update { state ->
+            val selectedId = when {
+                state.armedTomeId == tomeId -> null
+                (state.tomeCounts[tomeId] ?: 0) > 0 -> tomeId
+                else -> state.armedTomeId
+            }
+            state.copy(armedTomeId = selectedId)
         }
     }
 
@@ -135,9 +159,14 @@ class FocusViewModel : ViewModel() {
 
     // Timer controls
 
-    fun start(context: Context, taskTitle: String = "") {
+    fun start(
+        context: Context,
+        selectedTaskId: Int? = null,
+        taskTitle: String = ""
+    ) {
         if (_uiState.value.isRunning) return
 
+        this.selectedTaskId = selectedTaskId?.takeIf { it > 0 }
         _uiState.update { it.copy(isRunning = true) }
 
         startAmbientSound(context)
@@ -226,9 +255,13 @@ class FocusViewModel : ViewModel() {
         _uiState.update { it.copy(showSessionCompletePopup = false) }
     }
 
-    fun continueAfterBreak(context: Context, taskTitle: String = "") {
+    fun continueAfterBreak(
+        context: Context,
+        selectedTaskId: Int? = null,
+        taskTitle: String = ""
+    ) {
         _uiState.update { it.copy(showSessionCompletePopup = false) }
-        start(context, taskTitle)
+        start(context, selectedTaskId, taskTitle)
     }
 
     fun skipPhase() {
@@ -310,90 +343,83 @@ class FocusViewModel : ViewModel() {
 
     private fun rewardXpAndCoins(context: Context, preset: FocusPreset) {
         val appContext = context.applicationContext
-        val dao = AppDatabase.getDatabase(appContext).gameProfileDao()
+        val database = AppDatabase.getDatabase(appContext)
+        val dao = database.gameProfileDao()
+        val tomeDao = database.profileTomeDao()
 
         viewModelScope.launch {
-
-            val profile = _uiState.value.gameProfile ?: return@launch
-
             // Apply an armed tome's buff, then consume one (only on a win, which this is).
             val armedId = _uiState.value.armedTomeId
             val tome = if (armedId != null) shopTomes.firstOrNull { it.id == armedId } else null
-            val useTome = tome != null && profile.tomeCount(tome.id) > 0
+            var originalProfile: GameProfile? = null
+            var resultingLevel = 0
+            var usedTome = false
 
-            val xpReward = (preset.xpReward * (if (useTome) tome!!.xpMult else 1f)).toInt()
-            val coinReward = (preset.coinReward * (if (useTome) tome!!.coinMult else 1f)).toInt()
+            database.withTransaction {
+                val profile = dao.getProfile().first() ?: return@withTransaction
+                originalProfile = profile
+                usedTome = tome != null && tomeDao.decrement(PROFILE_ID, tome.id)
 
-            var newLevel = profile.level
-            var newXp = profile.xp + xpReward
-            var needed = 100 + (newLevel - 1) * 50            // = xpForNextLevel
-            while (newXp >= needed) {
-                newXp -= needed
-                newLevel += 1
-                needed = 100 + (newLevel - 1) * 50
-            }
+                val xpReward = (preset.xpReward * (if (usedTome) tome!!.xpMult else 1f)).toInt()
+                val coinReward = (preset.coinReward * (if (usedTome) tome!!.coinMult else 1f)).toInt()
 
-            val newCoins = profile.coins + coinReward
-            val leveledUp = newLevel > profile.level
+                var newLevel = profile.level
+                var newXp = profile.xp + xpReward
+                var needed = 100 + (newLevel - 1) * 50            // = xpForNextLevel
+                while (newXp >= needed) {
+                    newXp -= needed
+                    newLevel += 1
+                    needed = 100 + (newLevel - 1) * 50
+                }
+                resultingLevel = newLevel
 
-            val today = LocalDate.now().toString()
-            val yesterday = LocalDate.now().minusDays(1).toString()
-            val newStreak = when (profile.lastFocusDate) {
-                today -> profile.streakDays.coerceAtLeast(1)
-                yesterday -> profile.streakDays + 1
-                else -> 1
-            }
+                val today = LocalDate.now().toString()
+                val yesterday = LocalDate.now().minusDays(1).toString()
+                val newStreak = when (profile.lastFocusDate) {
+                    today -> profile.streakDays.coerceAtLeast(1)
+                    yesterday -> profile.streakDays + 1
+                    else -> 1
+                }
 
-            dao.updateProfile(
-                profile.copy(
-                    xp = newXp,
-                    level = newLevel,
-                    coins = newCoins,
-                    lastFocusDate = today,
-                    streakDays = newStreak,
-                    bestStreak = maxOf(profile.bestStreak, newStreak),
-                    totalSessions = profile.totalSessions + 1,
-                    tomeInventory = if (useTome)
-                        decInventory(profile.tomeInventory, tome!!.id)
-                    else profile.tomeInventory
+                dao.updateProfile(
+                    profile.copy(
+                        xp = newXp,
+                        level = newLevel,
+                        coins = profile.coins + coinReward,
+                        lastFocusDate = today,
+                        streakDays = newStreak,
+                        bestStreak = maxOf(profile.bestStreak, newStreak),
+                        totalSessions = profile.totalSessions + 1
+                    )
                 )
-            )
+            }
 
-            if (useTome) {
+            val profile = originalProfile ?: return@launch
+            val leveledUp = resultingLevel > profile.level
+
+            if (usedTome) {
                 _uiState.update { it.copy(armedTomeId = null) }
             }
 
             if (leveledUp) {
                 _uiState.update {
-                    it.copy(levelUp = LevelUpInfo(newLevel, profile.copy(level = newLevel).title))
+                    it.copy(
+                        levelUp = LevelUpInfo(
+                            resultingLevel,
+                            profile.copy(level = resultingLevel).title
+                        )
+                    )
                 }
             }
 
             // Loot drop — written to its own table (loot_inventory), independent of
             // the profile write above (different table, so no stale-snapshot clash).
             // Shown as a chest in the break dialog.
-            val lootDao = AppDatabase.getDatabase(appContext).lootInventoryDao()
+            val lootDao = database.lootInventoryDao()
             val drop = rollLootItem()
             lootDao.addItem(drop.id, 1)
             _uiState.update { it.copy(lootDrop = drop) }
         }
-    }
-
-    // "id:count,..." -> remove one of the given id (drop the entry if it hits 0).
-    private fun decInventory(csv: String, id: String): String {
-        if (csv.isBlank()) return csv
-        val out = StringBuilder()
-        for (part in csv.split(",")) {
-            val kv = part.split(":")
-            if (kv.size != 2) continue
-            var count = kv[1].toIntOrNull() ?: 0
-            if (kv[0] == id) count -= 1
-            if (count > 0) {
-                if (out.isNotEmpty()) out.append(",")
-                out.append("${kv[0]}:$count")
-            }
-        }
-        return out.toString()
     }
 
     private fun applyPenalty(context: Context) {
@@ -451,10 +477,13 @@ class FocusViewModel : ViewModel() {
         val appContext = context.applicationContext
 
         viewModelScope.launch {
-            AppDatabase.getDatabase(appContext)
-                .focusSessionDao()
+            val database = AppDatabase.getDatabase(appContext)
+            val validTaskId = selectedTaskId?.let { database.taskDao().findExistingId(it) }
+
+            database.focusSessionDao()
                 .insertFocusSession(
                     FocusSession(
+                        taskId = validTaskId,
                         taskTitle = taskTitle,
                         studyMinutes = studyMinutes,
                         breakMinutes = breakMinutes,

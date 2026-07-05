@@ -131,13 +131,18 @@ fun TaskNavigation(
         composable(route = Screen.Calendar.route) { CalendarScreen(modifier = modifier) }
 
         composable(
-            route = "${Screen.Focus.route}?taskTitle={taskTitle}&tag={tag}&priority={priority}",
+            route = "${Screen.Focus.route}?taskId={taskId}&taskTitle={taskTitle}&tag={tag}&priority={priority}",
             arguments = listOf(
+                navArgument("taskId") { type = NavType.IntType; defaultValue = -1 },
                 navArgument("taskTitle") { type = NavType.StringType; defaultValue = "" },
                 navArgument("tag") { type = NavType.StringType; defaultValue = "" },
                 navArgument("priority") { type = NavType.StringType; defaultValue = "" }
             )
         ) { backStackEntry ->
+            val taskId = backStackEntry.arguments
+                ?.getInt("taskId", -1)
+                ?.takeIf { it > 0 }
+
             val taskTitle = backStackEntry.arguments
                 ?.getString("taskTitle")
                 ?.let { Uri.decode(it) }
@@ -154,6 +159,7 @@ fun TaskNavigation(
                 .orEmpty()
 
             FocusScreen(
+                taskId = taskId,
                 taskTitle = taskTitle,
                 taskTag = tag,
                 taskPriority = priority,

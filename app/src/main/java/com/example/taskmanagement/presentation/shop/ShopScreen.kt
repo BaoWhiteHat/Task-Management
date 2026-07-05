@@ -70,6 +70,7 @@ fun ShopScreen(
     LaunchedEffect(Unit) { viewModel.load(context) }
 
     val profile by viewModel.profile.collectAsState()
+    val tomeCounts by viewModel.tomeCounts.collectAsState()
     val coins = profile?.coins ?: 0
     val selectedBg = profile?.selectedBackgroundId ?: ""
 
@@ -203,7 +204,7 @@ fun ShopScreen(
                         tomes.forEach { tome ->
                             TomeRow(
                                 tome = tome,
-                                owned = profile?.tomeCount(tome.id) ?: 0,
+                                owned = tomeCounts[tome.id] ?: 0,
                                 canAfford = coins >= tome.price,
                                 lockedByLevel = (profile?.level ?: 1) < tome.requiredLevel,
                                 onBuy = { viewModel.buyTome(context, tome) }
