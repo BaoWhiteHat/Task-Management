@@ -71,10 +71,15 @@ fun ShopScreen(
 
     val profile by viewModel.profile.collectAsState()
     val tomeCounts by viewModel.tomeCounts.collectAsState()
+    val unlockedSoundIds by viewModel.unlockedSoundIds.collectAsState()
+    val unlockedBackgroundIds by viewModel.unlockedBackgroundIds.collectAsState()
+    val guardianItemCounts by viewModel.guardianItemCounts.collectAsState()
     val coins = profile?.coins ?: 0
-    val selectedBg = profile?.selectedBackgroundId ?: ""
+    val selectedBg = profile?.selectedBackgroundId
+        ?.takeIf { it in unlockedBackgroundIds }
+        .orEmpty()
 
-    var tab by remember { mutableStateOf("bg") } // "bg" | "sound" | "tome"
+    var tab by remember { mutableStateOf("bg") }
 
     Box(modifier = Modifier.fillMaxSize().background(BgDeep)) {
         Column(
@@ -129,6 +134,7 @@ fun ShopScreen(
                 ShopTab("SCENES", tab == "bg", Modifier.weight(1f)) { tab = "bg" }
                 ShopTab("SOUNDS", tab == "sound", Modifier.weight(1f)) { tab = "sound" }
                 ShopTab("TOMES", tab == "tome", Modifier.weight(1f)) { tab = "tome" }
+                ShopTab("ITEMS", tab == "items", Modifier.weight(1f)) { tab = "items" }
             }
 
             if (tab == "bg") {
@@ -150,7 +156,7 @@ fun ShopScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             rowItems.forEach { bg ->
-                                val owned = (profile?.hasBackground(bg.id) ?: false) || bg.price == 0
+                                val owned = bg.id in unlockedBackgroundIds
                                 BackgroundCard(
                                     bg = bg,
                                     owned = owned,
@@ -178,14 +184,14 @@ fun ShopScreen(
                     ambientSounds.forEach { sound ->
                         SoundRow(
                             sound = sound,
-                            owned = (profile?.hasSound(sound.id) ?: false) || sound.price == 0,
+                            owned = sound.id in unlockedSoundIds,
                             canAfford = coins >= sound.price,
                             onBuy = { viewModel.buySound(context, sound) }
                         )
                     }
                     Spacer(Modifier.height(16.dp))
                 }
-            } else {
+            } else if (tab == "tome") {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -210,6 +216,33 @@ fun ShopScreen(
                                 onBuy = { viewModel.buyTome(context, tome) }
                             )
                         }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        "Guardian Items protect your progress and strengthen future victories.",
+                        fontFamily = Mono,
+                        fontSize = 10.sp,
+                        color = TextDim
+                    )
+                    guardianItems.forEach { item ->
+                        GuardianItemRow(
+                            item = item,
+                            owned = guardianItemCounts[item.id] ?: 0,
+                            canAfford = coins >= item.price,
+                            magnetActive = (guardianItemCounts[GuardianItemIds.LOOT_MAGNET_ACTIVE]
+                                ?: 0) > 0,
+                            onBuy = { viewModel.buyGuardianItem(context, item) },
+                            onActivate = { viewModel.activateLootMagnet(context) }
+                        )
                     }
                     Spacer(Modifier.height(16.dp))
                 }
@@ -548,6 +581,102 @@ private fun TomeRow(
                     fontSize = 12.sp,
                     color = if (canAfford) AmberAccent else PriceRed
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GuardianItemRow(
+    item: GuardianItem,
+    owned: Int,
+    canAfford: Boolean,
+    magnetActive: Boolean,
+    onBuy: () -> Unit,
+    onActivate: () -> Unit
+) {
+    val context = LocalContext.current
+    val resId = remember(item.drawableName) {
+        context.resources.getIdentifier(item.drawableName, "drawable", context.packageName)
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Surface1)
+            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Surface2),
+            contentAlignment = Alignment.Center
+        ) {
+            if (resId != 0) {
+                Image(
+                    painter = painterResource(resId),
+                    contentDescription = item.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(item.name, fontFamily = Mono, fontSize = 12.sp, color = TextPrimary)
+                Spacer(Modifier.width(6.dp))
+                Text("x$owned", fontFamily = Mono, fontSize = 11.sp, color = GreenBright)
+            }
+            Text(
+                item.description,
+                fontFamily = Mono,
+                fontSize = 9.sp,
+                color = TextMuted,
+                maxLines = 2
+            )
+            if (item.id == GuardianItemIds.LOOT_MAGNET && magnetActive) {
+                Text("ACTIVE FOR NEXT VICTORY", fontFamily = Mono, fontSize = 9.sp, color = GreenBright)
+            }
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Surface2)
+                    .clickable(enabled = canAfford, onClick = onBuy)
+                    .padding(horizontal = 9.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("\uD83E\uDE99", fontSize = 11.sp)
+                    Spacer(Modifier.width(3.dp))
+                    Text(
+                        "${item.price}",
+                        fontFamily = Mono,
+                        fontSize = 10.sp,
+                        color = if (canAfford) AmberAccent else PriceRed
+                    )
+                }
+            }
+            if (item.id == GuardianItemIds.LOOT_MAGNET && owned > 0 && !magnetActive) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(GreenDark)
+                        .clickable(onClick = onActivate)
+                        .padding(horizontal = 9.dp, vertical = 6.dp)
+                ) {
+                    Text("ACTIVATE", fontFamily = Mono, fontSize = 9.sp, color = GreenBright)
+                }
             }
         }
     }

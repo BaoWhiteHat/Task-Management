@@ -1,5 +1,7 @@
 package com.example.taskmanagement.presentation.focus
 
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +42,23 @@ fun FocusScreen(
     val seconds = state.timeLeft % 60
     val timeText = "%02d:%02d".format(minutes, seconds)
 
+    BackHandler(
+        enabled = currentPage == FocusPage.SESSION && !state.showSessionCompletePopup
+    ) {
+        if (state.showRetreatDialog) {
+            viewModel.dismissRetreatDialog()
+        } else {
+            viewModel.requestRetreat()
+        }
+    }
+
+    LaunchedEffect(state.feedbackMessage) {
+        state.feedbackMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            viewModel.clearFeedback()
+        }
+    }
+
     when (currentPage) {
         FocusPage.SETUP -> {
             FocusSetupScreen(
@@ -66,10 +85,6 @@ fun FocusScreen(
                 state = state,
                 timeText = timeText,
                 encounter = encounter,
-                onBackToSetup = {
-                    viewModel.pause()
-                    currentPage = FocusPage.SETUP
-                },
                 onStart = {
                     viewModel.start(
                         context = context,
@@ -78,14 +93,18 @@ fun FocusScreen(
                     )
                 },
                 onPause = viewModel::pause,
-                onReset = {
-                    viewModel.requestReset()
+                onRequestRetreat = viewModel::requestRetreat,
+                onRetreatWithPotion = {
+                    viewModel.retreat(context, useFocusPotion = true) {
+                        currentPage = FocusPage.SETUP
+                    }
                 },
-                onConfirmReset = {
-                    viewModel.reset(context)
-                    currentPage = FocusPage.SETUP
+                onRetreatWithoutPotion = {
+                    viewModel.retreat(context, useFocusPotion = false) {
+                        currentPage = FocusPage.SETUP
+                    }
                 },
-                onDismissPenalty = viewModel::dismissPenaltyWarning,
+                onDismissRetreat = viewModel::dismissRetreatDialog,
                 onSkip = viewModel::skipPhase
             )
         }
@@ -97,6 +116,7 @@ fun FocusScreen(
         BreakActivityDialog(
             suggestion = suggestion,
             lootDrop = state.lootDrop,
+            bonusLootDrop = state.bonusLootDrop,
             onDismiss = viewModel::dismissBreakActivityPopup,
             onAnotherIdea = viewModel::randomizeBreakActivity,
             onStartBreak = {

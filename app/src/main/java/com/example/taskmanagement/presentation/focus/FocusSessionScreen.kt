@@ -77,7 +77,7 @@ fun FocusSessionScreen(
     }
 
     // Penalty warning dialog
-    if (state.showPenaltyWarning) {
+    if (state.showRetreatDialog) {
         PenaltyWarningDialog(
             onConfirm = onConfirmReset,
             onDismiss = onDismissPenalty
@@ -218,16 +218,9 @@ private fun ImmersiveView(
 
         // Now playing bottom (if sound)
         state.selectedSoundId?.let { soundId ->
-            val profile = state.gameProfile
-            if (profile != null && profile.hasSound(soundId)) {
-                val emoji = when (soundId) {
-                    "rain" -> "\uD83C\uDF27"
-                    "forest" -> "\uD83C\uDF32"
-                    "fireplace" -> "\uD83D\uDD25"
-                    "ocean" -> "\uD83C\uDF0A"
-                    else -> "\uD83C\uDFB5"
-                }
-                val soundName = ambientSounds.find { it.id == soundId }?.name ?: soundId
+            if (soundId in state.unlockedSoundIds) {
+                val sound = ambientSoundById(soundId)
+                val soundName = sound?.name ?: soundId
 
                 Row(
                     modifier = Modifier
@@ -239,7 +232,7 @@ private fun ImmersiveView(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(text = emoji, fontSize = 14.sp)
+                    Text(text = sound?.icon ?: "\uD83C\uDFB5", fontSize = 14.sp)
                     Text(
                         text = soundName,
                         style = MaterialTheme.typography.labelSmall,
@@ -423,8 +416,7 @@ private fun ControlView(
 
         // Now playing
         state.selectedSoundId?.let { soundId ->
-            val profile = state.gameProfile
-            if (profile != null && profile.hasSound(soundId)) {
+            if (soundId in state.unlockedSoundIds) {
                 NowPlayingBar(soundId = soundId, isRunning = state.isRunning)
             }
         }
@@ -592,14 +584,8 @@ private fun PhaseChip(
 //  NOW PLAYING BAR
 @Composable
 private fun NowPlayingBar(soundId: String, isRunning: Boolean) {
-    val soundName = ambientSounds.find { it.id == soundId }?.name ?: soundId
-    val emoji = when (soundId) {
-        "rain" -> "\uD83C\uDF27"
-        "forest" -> "\uD83C\uDF32"
-        "fireplace" -> "\uD83D\uDD25"
-        "ocean" -> "\uD83C\uDF0A"
-        else -> "\uD83C\uDFB5"
-    }
+    val sound = ambientSoundById(soundId)
+    val soundName = sound?.name ?: soundId
 
     Box(
         modifier = Modifier
@@ -612,7 +598,7 @@ private fun NowPlayingBar(soundId: String, isRunning: Boolean) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(text = emoji, fontSize = 16.sp)
+            Text(text = sound?.icon ?: "\uD83C\uDFB5", fontSize = 16.sp)
             Text(
                 text = soundName,
                 style = MaterialTheme.typography.labelMedium,

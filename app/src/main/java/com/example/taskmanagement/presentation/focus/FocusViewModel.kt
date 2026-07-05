@@ -8,9 +8,13 @@ import androidx.room.withTransaction
 import com.example.taskmanagement.data.local.AppDatabase
 import com.example.taskmanagement.data.local.models.FocusSession
 import com.example.taskmanagement.data.local.models.GameProfile
+import com.example.taskmanagement.data.local.models.ProfileBackground
+import com.example.taskmanagement.data.local.models.ProfileSound
 import com.example.taskmanagement.presentation.focus.utils.SoundPlayer
 import com.example.taskmanagement.presentation.loot.rollLootItem
 import com.example.taskmanagement.presentation.shop.shopTomes
+import com.example.taskmanagement.presentation.shop.shopBackgrounds
+import com.example.taskmanagement.presentation.shop.GuardianItemIds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +30,16 @@ class FocusViewModel : ViewModel() {
         // LUU Y: doi thanh false truoc khi demo/nop bai (true = timer chay nhanh 50x de test)
         private const val FAST_TEST_MODE = true
         private const val PROFILE_ID = 1
+        private const val DEFAULT_SOUND_ID = "rain"
+        private const val RETREAT_XP_PENALTY = 15
+        private const val RETREAT_COIN_PENALTY = 5
+        private val GUARDIAN_ITEM_IDS = setOf(
+            GuardianItemIds.STREAK_SHIELD,
+            GuardianItemIds.FOCUS_POTION,
+            GuardianItemIds.TOME_SEAL,
+            GuardianItemIds.LOOT_MAGNET,
+            GuardianItemIds.LOOT_MAGNET_ACTIVE
+        )
 
         private val TIMER_TICK_MS: Long
             get() = if (FAST_TEST_MODE) 20L else 1000L
@@ -38,8 +52,12 @@ class FocusViewModel : ViewModel() {
     private var completedSessionsJob: Job? = null
     private var gameProfileJob: Job? = null
     private var profileTomesJob: Job? = null
+    private var profileSoundsJob: Job? = null
+    private var profileBackgroundsJob: Job? = null
+    private var guardianItemsJob: Job? = null
     private var ambientPlayer: MediaPlayer? = null
     private var selectedTaskId: Int? = null
+    private var retreatInProgress = false
 
     private var rewardXpMultiplier: Float = 1f
     private var rewardCoinMultiplier: Float = 1f
@@ -62,14 +80,24 @@ class FocusViewModel : ViewModel() {
     }
 
     fun loadGameProfile(context: Context) {
-        if (gameProfileJob != null || profileTomesJob != null) return
+        if (gameProfileJob != null) return
 
         val appContext = context.applicationContext
         val database = AppDatabase.getDatabase(appContext)
         val dao = database.gameProfileDao()
 
         gameProfileJob = viewModelScope.launch {
-            dao.createProfile()
+            database.withTransaction {
+                dao.createProfile()
+                database.profileSoundDao().insertDefaults(
+                    listOf(ProfileSound(PROFILE_ID, DEFAULT_SOUND_ID))
+                )
+                database.profileBackgroundDao().insertDefaults(
+                    shopBackgrounds
+                        .filter { it.price == 0 }
+                        .map { ProfileBackground(PROFILE_ID, it.id) }
+                )
+            }
             dao.getProfile().collect { profile ->
                 profile?.let {
                     _uiState.update { state ->
@@ -77,6 +105,30 @@ class FocusViewModel : ViewModel() {
                     }
                 }
             }
+        }
+
+        profileSoundsJob = viewModelScope.launch {
+            database.profileSoundDao().observeUnlockedSounds(PROFILE_ID).collect { soundIds ->
+                val unlockedIds = soundIds.toSet()
+                _uiState.update { state ->
+                    state.copy(
+                        unlockedSoundIds = unlockedIds,
+                        selectedSoundId = state.selectedSoundId
+                            ?.takeIf { it in unlockedIds }
+                            ?: DEFAULT_SOUND_ID.takeIf { it in unlockedIds }
+                    )
+                }
+            }
+        }
+
+        profileBackgroundsJob = viewModelScope.launch {
+            database.profileBackgroundDao()
+                .observeUnlockedBackgrounds(PROFILE_ID)
+                .collect { backgroundIds ->
+                    _uiState.update {
+                        it.copy(unlockedBackgroundIds = backgroundIds.toSet())
+                    }
+                }
         }
 
         profileTomesJob = viewModelScope.launch {
@@ -90,6 +142,15 @@ class FocusViewModel : ViewModel() {
                         }
                     )
                 }
+            }
+        }
+
+        guardianItemsJob = viewModelScope.launch {
+            database.lootInventoryDao().getOwned().collect { items ->
+                val counts = items
+                    .filter { it.itemId in GUARDIAN_ITEM_IDS }
+                    .associate { it.itemId to it.count }
+                _uiState.update { it.copy(guardianItemCounts = counts) }
             }
         }
     }
@@ -118,7 +179,9 @@ class FocusViewModel : ViewModel() {
     }
 
     fun selectSound(soundId: String) {
-        _uiState.update { it.copy(selectedSoundId = soundId) }
+        _uiState.update {
+            if (soundId in it.unlockedSoundIds) it.copy(selectedSoundId = soundId) else it
+        }
     }
 
     // Arm a tome for the next battle. Tapping the armed tome again clears it.
@@ -136,25 +199,31 @@ class FocusViewModel : ViewModel() {
     fun unlockSound(context: Context, sound: AmbientSound) {
         val profile = _uiState.value.gameProfile ?: return
         if (profile.coins < sound.price) return
-        if (profile.hasSound(sound.id)) return
+        if (sound.id in _uiState.value.unlockedSoundIds) return
 
         val appContext = context.applicationContext
-        val dao = AppDatabase.getDatabase(appContext).gameProfileDao()
+        val database = AppDatabase.getDatabase(appContext)
 
         viewModelScope.launch {
-            val fresh = dao.getProfile().first() ?: return@launch
-            if (fresh.coins < sound.price) return@launch
-            if (fresh.hasSound(sound.id)) return@launch
+            database.withTransaction {
+                val dao = database.gameProfileDao()
+                val soundDao = database.profileSoundDao()
+                val fresh = dao.getProfile().first() ?: return@withTransaction
+                if (fresh.coins < sound.price) return@withTransaction
+                if (soundDao.isUnlocked(PROFILE_ID, sound.id)) return@withTransaction
 
-            dao.updateProfile(
-                fresh.copy(
-                    coins = (fresh.coins - sound.price).coerceAtLeast(0),
-                    unlockedSounds = fresh.unlockedSounds + ",${sound.id}"
+                soundDao.unlock(ProfileSound(PROFILE_ID, sound.id))
+                dao.updateProfile(
+                    fresh.copy(coins = (fresh.coins - sound.price).coerceAtLeast(0))
                 )
-            )
+            }
+            _uiState.update { state ->
+                state.copy(
+                    unlockedSoundIds = state.unlockedSoundIds + sound.id,
+                    selectedSoundId = sound.id
+                )
+            }
         }
-
-        _uiState.update { it.copy(selectedSoundId = sound.id) }
     }
 
     // Timer controls
@@ -197,22 +266,13 @@ class FocusViewModel : ViewModel() {
         _uiState.update { it.copy(isRunning = false) }
     }
 
-    fun reset(context: Context? = null) {
+    private fun resetBattleState(feedbackMessage: String? = null) {
         timerJob?.cancel()
         timerJob = null
         stopAmbientSound()
 
         val state = _uiState.value
         val preset = state.selectedPreset
-
-        // Penalty: quit before 50% = lose XP & coins
-        if (context != null && state.phase == FocusPhase.STUDY) {
-            val elapsed = preset.studySeconds - state.timeLeft
-            val halfWay = preset.studySeconds / 2
-            if (elapsed > 0 && elapsed < halfWay) {
-                applyPenalty(context)
-            }
-        }
 
         _uiState.update {
             it.copy(
@@ -221,28 +281,70 @@ class FocusViewModel : ViewModel() {
                 isRunning = false,
                 showBreakActivityPopup = false,
                 lootDrop = null,
+                bonusLootDrop = null,
                 breakActivitySuggestion = null,
-                showPenaltyWarning = false,
-                showSessionCompletePopup = false
+                showRetreatDialog = false,
+                showSessionCompletePopup = false,
+                feedbackMessage = feedbackMessage
             )
         }
     }
 
-    fun requestReset() {
-        val state = _uiState.value
-        if (state.phase == FocusPhase.STUDY && state.isRunning) {
-            val elapsed = state.selectedPreset.studySeconds - state.timeLeft
-            val halfWay = state.selectedPreset.studySeconds / 2
-            if (elapsed > 0 && elapsed < halfWay) {
-                _uiState.update { it.copy(showPenaltyWarning = true) }
-                return
-            }
-        }
-        reset()
+    fun requestRetreat() {
+        if (retreatInProgress) return
+        _uiState.update { it.copy(showRetreatDialog = true) }
     }
 
-    fun dismissPenaltyWarning() {
-        _uiState.update { it.copy(showPenaltyWarning = false) }
+    fun dismissRetreatDialog() {
+        _uiState.update { it.copy(showRetreatDialog = false) }
+    }
+
+    fun retreat(context: Context, useFocusPotion: Boolean, onRetreated: () -> Unit) {
+        if (retreatInProgress) return
+        retreatInProgress = true
+        val earlyRetreat = _uiState.value.isEarlyRetreat
+        timerJob?.cancel()
+        timerJob = null
+        stopAmbientSound()
+
+        val database = AppDatabase.getDatabase(context.applicationContext)
+        viewModelScope.launch {
+            var potionUsed = false
+            var penaltyApplied = false
+
+            database.withTransaction {
+                val profileDao = database.gameProfileDao()
+                val freshProfile = profileDao.getProfile().first() ?: return@withTransaction
+
+                if (earlyRetreat) {
+                    potionUsed = useFocusPotion &&
+                        database.lootInventoryDao().consumeOne(GuardianItemIds.FOCUS_POTION)
+                    if (!potionUsed) {
+                        profileDao.updateProfile(
+                            freshProfile.copy(
+                                xp = (freshProfile.xp - RETREAT_XP_PENALTY).coerceAtLeast(0),
+                                coins = (freshProfile.coins - RETREAT_COIN_PENALTY).coerceAtLeast(0),
+                                streakDays = 0
+                            )
+                        )
+                        penaltyApplied = true
+                    }
+                }
+            }
+
+            val feedback = when {
+                potionUsed -> "Focus Potion softened the retreat penalty."
+                penaltyApplied -> "Retreat penalty applied."
+                else -> "Safe retreat. No penalty applied."
+            }
+            resetBattleState(feedback)
+            retreatInProgress = false
+            onRetreated()
+        }
+    }
+
+    fun clearFeedback() {
+        _uiState.update { it.copy(feedbackMessage = null) }
     }
 
     fun dismissLevelUp() {
@@ -279,7 +381,9 @@ class FocusViewModel : ViewModel() {
     // Break activity popup
 
     fun dismissBreakActivityPopup() {
-        _uiState.update { it.copy(showBreakActivityPopup = false, lootDrop = null) }
+        _uiState.update {
+            it.copy(showBreakActivityPopup = false, lootDrop = null, bonusLootDrop = null)
+        }
     }
 
     fun randomizeBreakActivity() {
@@ -354,11 +458,21 @@ class FocusViewModel : ViewModel() {
             var originalProfile: GameProfile? = null
             var resultingLevel = 0
             var usedTome = false
+            var tomePreserved = false
+            var streakProtected = false
+            var bonusDrop: com.example.taskmanagement.presentation.loot.LootItem? = null
+            val normalDrop = rollLootItem()
 
             database.withTransaction {
                 val profile = dao.getProfile().first() ?: return@withTransaction
+                val lootDao = database.lootInventoryDao()
                 originalProfile = profile
-                usedTome = tome != null && tomeDao.decrement(PROFILE_ID, tome.id)
+                val tomeAvailable = tome != null &&
+                    (tomeDao.getTomeCount(PROFILE_ID, tome.id) ?: 0) > 0
+                if (tomeAvailable) {
+                    tomePreserved = lootDao.consumeOne(GuardianItemIds.TOME_SEAL)
+                    usedTome = tomePreserved || tomeDao.decrement(PROFILE_ID, tome!!.id)
+                }
 
                 val xpReward = (preset.xpReward * (if (usedTome) tome!!.xpMult else 1f)).toInt()
                 val coinReward = (preset.coinReward * (if (usedTome) tome!!.coinMult else 1f)).toInt()
@@ -375,9 +489,15 @@ class FocusViewModel : ViewModel() {
 
                 val today = LocalDate.now().toString()
                 val yesterday = LocalDate.now().minusDays(1).toString()
+                val twoDaysAgo = LocalDate.now().minusDays(2).toString()
                 val newStreak = when (profile.lastFocusDate) {
                     today -> profile.streakDays.coerceAtLeast(1)
                     yesterday -> profile.streakDays + 1
+                    twoDaysAgo -> {
+                        streakProtected = profile.streakDays > 0 &&
+                            lootDao.consumeOne(GuardianItemIds.STREAK_SHIELD)
+                        if (streakProtected) profile.streakDays + 1 else 1
+                    }
                     else -> 1
                 }
 
@@ -392,12 +512,18 @@ class FocusViewModel : ViewModel() {
                         totalSessions = profile.totalSessions + 1
                     )
                 )
+
+                lootDao.addItem(normalDrop.id, 1)
+                if (lootDao.consumeOne(GuardianItemIds.LOOT_MAGNET_ACTIVE)) {
+                    bonusDrop = rollLootItem()
+                    lootDao.addItem(bonusDrop!!.id, 1)
+                }
             }
 
             val profile = originalProfile ?: return@launch
             val leveledUp = resultingLevel > profile.level
 
-            if (usedTome) {
+            if (usedTome && !tomePreserved) {
                 _uiState.update { it.copy(armedTomeId = null) }
             }
 
@@ -415,28 +541,20 @@ class FocusViewModel : ViewModel() {
             // Loot drop — written to its own table (loot_inventory), independent of
             // the profile write above (different table, so no stale-snapshot clash).
             // Shown as a chest in the break dialog.
-            val lootDao = database.lootInventoryDao()
-            val drop = rollLootItem()
-            lootDao.addItem(drop.id, 1)
-            _uiState.update { it.copy(lootDrop = drop) }
-        }
-    }
-
-    private fun applyPenalty(context: Context) {
-        val appContext = context.applicationContext
-        val dao = AppDatabase.getDatabase(appContext).gameProfileDao()
-
-        viewModelScope.launch {
-            val profile = _uiState.value.gameProfile ?: return@launch
-            val newXp = (profile.xp - 15).coerceAtLeast(0)
-            val newCoins = (profile.coins - 5).coerceAtLeast(0)
-            dao.updateProfile(
-                profile.copy(
-                    xp = newXp,
-                    coins = newCoins,
-                    streakDays = 0
+            val feedbackMessages = buildList {
+                if (streakProtected) add("Your streak was protected by a Shield.")
+                if (tomePreserved) add("Tome Seal preserved your armed tome.")
+                if (bonusDrop != null) add("Loot Magnet attracted bonus loot!")
+            }
+            _uiState.update {
+                it.copy(
+                    lootDrop = normalDrop,
+                    bonusLootDrop = bonusDrop,
+                    feedbackMessage = feedbackMessages
+                        .takeIf { messages -> messages.isNotEmpty() }
+                        ?.joinToString("\n")
                 )
-            )
+            }
         }
     }
 
@@ -445,8 +563,7 @@ class FocusViewModel : ViewModel() {
     private fun startAmbientSound(context: Context) {
         stopAmbientSound()
         val soundId = _uiState.value.selectedSoundId ?: return
-        val profile = _uiState.value.gameProfile ?: return
-        if (!profile.hasSound(soundId)) return
+        if (soundId !in _uiState.value.unlockedSoundIds) return
 
         val resId = context.resources.getIdentifier(soundId, "raw", context.packageName)
         if (resId == 0) return
@@ -508,6 +625,10 @@ class FocusViewModel : ViewModel() {
         timerJob?.cancel()
         completedSessionsJob?.cancel()
         gameProfileJob?.cancel()
+        profileTomesJob?.cancel()
+        profileSoundsJob?.cancel()
+        profileBackgroundsJob?.cancel()
+        guardianItemsJob?.cancel()
         stopAmbientSound()
         super.onCleared()
     }

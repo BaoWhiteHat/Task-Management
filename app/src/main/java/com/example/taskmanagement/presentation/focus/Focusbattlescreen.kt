@@ -17,9 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import com.example.taskmanagement.R
 import kotlin.math.roundToInt
 import com.example.taskmanagement.presentation.shop.shopTomes
+import com.example.taskmanagement.presentation.shop.GuardianItemIds
 
 private val Pixel = FontFamily.Monospace
 
@@ -64,18 +62,18 @@ fun FocusBattleScreen(
     state: FocusUiState,
     timeText: String,
     encounter: Encounter,
-    onBackToSetup: () -> Unit,
     onStart: () -> Unit,
     onPause: () -> Unit,
-    onReset: () -> Unit,
-    onConfirmReset: () -> Unit,
-    onDismissPenalty: () -> Unit,
+    onRequestRetreat: () -> Unit,
+    onRetreatWithPotion: () -> Unit,
+    onRetreatWithoutPotion: () -> Unit,
+    onDismissRetreat: () -> Unit,
     onSkip: () -> Unit
 ) {
     val hasStarted = state.timeLeft < state.selectedPreset.studySeconds || state.isBreak
 
     val context = LocalContext.current
-    val selectedBg = state.gameProfile?.selectedBackgroundId ?: ""
+    val selectedBg = state.selectedBackgroundId
     val bgResId = remember(selectedBg) {
         if (selectedBg.isBlank()) 0
         else context.resources.getIdentifier(selectedBg, "drawable", context.packageName)
@@ -100,7 +98,7 @@ fun FocusBattleScreen(
                 modifier = Modifier.fillMaxWidth().widthIn(max = 460.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                BattleTopBar(onBackToSetup = onBackToSetup, palette = palette)
+                BattleTopBar(palette = palette)
                 HeroHud(profile = state.gameProfile, palette = palette)
 
                 if (state.isBreak) {
@@ -116,7 +114,9 @@ fun FocusBattleScreen(
                     )
                 }
 
-                state.selectedSoundId?.let { AmbientPill(soundId = it, palette = palette) }
+                state.selectedSoundId
+                    ?.takeIf { it in state.unlockedSoundIds }
+                    ?.let { AmbientPill(soundId = it, palette = palette) }
 
                 BattleControls(
                     isRunning = state.isRunning,
@@ -125,15 +125,21 @@ fun FocusBattleScreen(
                     palette = palette,
                     onStart = onStart,
                     onPause = onPause,
-                    onReset = onReset,
+                    onReset = onRequestRetreat,
                     onSkip = onSkip
                 )
             }
         }
 
         // Modal sits on its own dark overlay, so it always uses the original dark style.
-        if (state.showPenaltyWarning) {
-            RetreatDialog(onConfirm = onConfirmReset, onDismiss = onDismissPenalty)
+        if (state.showRetreatDialog) {
+            RetreatDialog(
+                earlyRetreat = state.isEarlyRetreat,
+                focusPotionCount = state.guardianItemCounts[GuardianItemIds.FOCUS_POTION] ?: 0,
+                onUsePotion = onRetreatWithPotion,
+                onRetreat = onRetreatWithoutPotion,
+                onDismiss = onDismissRetreat
+            )
         }
     }
 }
@@ -165,23 +171,13 @@ private fun FocusBackgroundLayer(resId: Int) {
 }
 
 @Composable
-private fun BattleTopBar(onBackToSetup: () -> Unit, palette: BattlePalette) {
+private fun BattleTopBar(palette: BattlePalette) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(palette.panel)
-                .border(0.5.dp, palette.border, CircleShape)
-                .clickable(onClick = onBackToSetup),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.KeyboardArrowLeft, "Back", tint = palette.textPrimary)
-        }
+        Spacer(Modifier.size(40.dp))
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
@@ -504,6 +500,7 @@ private fun StatBar(progress: Float, fill: Color, track: Color, height: Dp = 5.d
 
 @Composable
 private fun AmbientPill(soundId: String, palette: BattlePalette) {
+    val sound = ambientSoundById(soundId)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -514,7 +511,7 @@ private fun AmbientPill(soundId: String, palette: BattlePalette) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text("\uD83C\uDF27", fontSize = 14.sp)
+        Text(sound?.icon ?: "\uD83C\uDFB5", fontSize = 14.sp)
         Text("$soundId · playing", fontFamily = Pixel, fontSize = 11.sp, color = palette.textMuted)
     }
 }
@@ -581,7 +578,14 @@ private fun GhostButton(text: String, onClick: () -> Unit, palette: BattlePalett
 }
 
 @Composable
-private fun RetreatDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun RetreatDialog(
+    earlyRetreat: Boolean,
+    focusPotionCount: Int,
+    onUsePotion: () -> Unit,
+    onRetreat: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val hasPotion = focusPotionCount > 0
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -595,6 +599,10 @@ private fun RetreatDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 .clip(RoundedCornerShape(18.dp))
                 .background(Surface1)
                 .border(0.5.dp, HpRed, RoundedCornerShape(18.dp))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { }
                 .padding(22.dp)
         ) {
             Column(
@@ -603,34 +611,64 @@ private fun RetreatDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             ) {
                 Text("Flee the battle?", fontFamily = Pixel, fontSize = 16.sp, color = TextPrimary)
                 Text(
-                    "Run away will lose process and get penalty",
+                    when {
+                        earlyRetreat && hasPotion ->
+                            "You are leaving before the safe threshold. Retreating now costs 15 XP, 5 coins, and resets your streak. Use 1 Focus Potion to avoid the penalty?\n\nFocus Potions owned: $focusPotionCount"
+                        earlyRetreat ->
+                            "You are leaving before the safe threshold. Retreating now costs 15 XP, 5 coins, and resets your streak."
+                        else -> "You reached the safe threshold. No XP or coins will be lost."
+                    },
                     fontFamily = Pixel,
                     fontSize = 11.sp,
                     color = TextMuted
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Surface2)
-                            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
-                            .clickable(onClick = onDismiss)
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) { Text("Stay", fontFamily = Pixel, fontSize = 12.sp, color = GreenBright) }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(HpRed)
-                            .clickable(onClick = onConfirm)
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) { Text("Flee", fontFamily = Pixel, fontSize = 12.sp, color = Color.White) }
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    RetreatActionButton("Stay focused", Surface2, GreenBright, onDismiss)
+                    if (earlyRetreat && hasPotion) {
+                        RetreatActionButton(
+                            "Use Potion & Retreat",
+                            GreenDark,
+                            Color.White,
+                            onUsePotion
+                        )
+                    }
+                    RetreatActionButton(
+                        text = when {
+                            earlyRetreat && hasPotion -> "Retreat without Potion"
+                            earlyRetreat -> "Retreat anyway"
+                            else -> "Retreat"
+                        },
+                        background = if (earlyRetreat) HpRed else Surface2,
+                        textColor = if (earlyRetreat) Color.White else TextPrimary,
+                        onClick = onRetreat
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RetreatActionButton(
+    text: String,
+    background: Color,
+    textColor: Color,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(background)
+            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text, fontFamily = Pixel, fontSize = 11.sp, color = textColor)
     }
 }
 

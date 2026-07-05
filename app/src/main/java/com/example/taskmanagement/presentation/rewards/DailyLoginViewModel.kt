@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.withTransaction
 import com.example.taskmanagement.data.local.AppDatabase
 import com.example.taskmanagement.data.local.models.GameProfile
+import com.example.taskmanagement.data.local.models.ProfileBackground
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -83,19 +84,17 @@ class DailyLoginViewModel : ViewModel() {
                     return@withTransaction
                 }
 
-                val newBackgrounds =
-                    if (reward.backgroundId != null) {
-                        appendId(freshProfile.unlockedBackgrounds, reward.backgroundId)
-                    } else {
-                        freshProfile.unlockedBackgrounds
-                    }
                 val updated = freshProfile.copy(
                     coins = freshProfile.coins + reward.coins,
-                    unlockedBackgrounds = newBackgrounds,
                     lastLoginDate = today,
                     loginStreak = s.streak
                 )
                 dao.updateProfile(updated)
+                if (reward.backgroundId != null) {
+                    db.profileBackgroundDao().unlock(
+                        ProfileBackground(PROFILE_ID, reward.backgroundId)
+                    )
+                }
                 if (reward.tomeId != null) {
                     db.profileTomeDao().increment(PROFILE_ID, reward.tomeId)
                 }
@@ -112,12 +111,6 @@ class DailyLoginViewModel : ViewModel() {
 
     fun dismiss() {
         _state.value = _state.value.copy(visible = false)
-    }
-
-    private fun appendId(csv: String, id: String): String = when {
-        csv.isBlank() -> id
-        csv.split(",").contains(id) -> csv
-        else -> "$csv,$id"
     }
 
     companion object {

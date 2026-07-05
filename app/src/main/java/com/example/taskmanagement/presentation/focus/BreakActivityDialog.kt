@@ -46,6 +46,7 @@ private fun rarityColor(r: LootRarity): Color = when (r) {
 fun BreakActivityDialog(
     suggestion: BreakActivitySuggestion,
     lootDrop: LootItem? = null,
+    bonusLootDrop: LootItem? = null,
     onDismiss: () -> Unit,
     onAnotherIdea: () -> Unit,
     onStartBreak: () -> Unit
@@ -64,6 +65,9 @@ fun BreakActivityDialog(
             ) {
                 if (lootDrop != null) {
                     LootRewardCard(drop = lootDrop)
+                }
+                if (bonusLootDrop != null) {
+                    LootRewardCard(drop = bonusLootDrop, bonus = true)
                 }
 
                 Text(
@@ -96,7 +100,7 @@ fun BreakActivityDialog(
 
 // Loot chest shown on top of the break suggestion. Tap to open and reveal the drop.
 @Composable
-private fun LootRewardCard(drop: LootItem) {
+private fun LootRewardCard(drop: LootItem, bonus: Boolean = false) {
     val context = LocalContext.current
     var opened by remember(drop.id) { mutableStateOf(false) }
     val resId = remember(drop.drawableName) {
@@ -151,7 +155,7 @@ private fun LootRewardCard(drop: LootItem) {
 
             } else {
                 Text(
-                    text = "You found loot!",
+                    text = if (bonus) "Loot Magnet bonus!" else "You found loot!",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold
                 )

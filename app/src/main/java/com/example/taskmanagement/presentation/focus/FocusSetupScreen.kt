@@ -107,7 +107,7 @@ fun FocusSetupScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             ambientSounds.forEach { sound ->
-                val isUnlocked = profile?.hasSound(sound.id) ?: (sound.price == 0)
+                val isUnlocked = sound.id in state.unlockedSoundIds
                 val isSelected = state.selectedSoundId == sound.id
                 SoundItem(
                     sound = sound,
@@ -491,13 +491,7 @@ private fun SoundItem(
         ) {
             if (isUnlocked) {
                 Text(
-                    text = when (sound.id) {
-                        "rain" -> "\uD83C\uDF27"
-                        "forest" -> "\uD83C\uDF32"
-                        "fireplace" -> "\uD83D\uDD25"
-                        "ocean" -> "\uD83C\uDF0A"
-                        else -> "\uD83C\uDFB5"
-                    },
+                    text = sound.icon,
                     fontSize = 22.sp
                 )
             } else {

@@ -29,6 +29,12 @@ interface LootInventoryDao {
     @Query("UPDATE loot_inventory SET count = count - :n WHERE itemId = :itemId")
     suspend fun decrement(itemId: String, n: Int)
 
+    @Query(
+        "UPDATE loot_inventory SET count = count - 1 " +
+            "WHERE itemId = :itemId AND count > 0"
+    )
+    suspend fun decrementIfOwned(itemId: String): Int
+
     @Query("DELETE FROM loot_inventory WHERE count <= 0")
     suspend fun purgeEmpty()
 
@@ -42,5 +48,12 @@ interface LootInventoryDao {
     suspend fun removeItem(itemId: String, n: Int = 1) {
         decrement(itemId, n)
         purgeEmpty()
+    }
+
+    @Transaction
+    suspend fun consumeOne(itemId: String): Boolean {
+        val consumed = decrementIfOwned(itemId) > 0
+        if (consumed) purgeEmpty()
+        return consumed
     }
 }

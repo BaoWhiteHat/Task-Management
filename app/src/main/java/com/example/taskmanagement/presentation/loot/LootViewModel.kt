@@ -25,7 +25,9 @@ class LootViewModel : ViewModel() {
         val db = AppDatabase.getDatabase(context.applicationContext)
         viewModelScope.launch {
             db.lootInventoryDao().getOwned().collect { list ->
-                _owned.value = list.associate { it.itemId to it.count }
+                _owned.value = list
+                    .filter { lootItemById(it.itemId) != null }
+                    .associate { it.itemId to it.count }
             }
         }
         viewModelScope.launch {
@@ -52,9 +54,10 @@ class LootViewModel : ViewModel() {
             val list = db.lootInventoryDao().getOwned().first()
             var total = 0
             for (row in list) {
+                val item = lootItemById(row.itemId) ?: continue
                 val extra = row.count - 1
                 if (extra > 0) {
-                    val price = lootItemById(row.itemId)?.rarity?.sellPrice ?: 0
+                    val price = item.rarity.sellPrice
                     db.lootInventoryDao().removeItem(row.itemId, extra)
                     total += extra * price
                 }

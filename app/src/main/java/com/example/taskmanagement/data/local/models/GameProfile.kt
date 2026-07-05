@@ -14,7 +14,9 @@ data class GameProfile(
     val streakDays: Int = 0,
     val bestStreak: Int = 0,
     val lastFocusDate: String = "",
+    @Deprecated("Sound ownership is stored in profile_sounds")
     val unlockedSounds: String = "rain",
+    @Deprecated("Background ownership is stored in profile_backgrounds")
     val unlockedBackgrounds: String = "",
     val selectedBackgroundId: String = "",
     // Legacy prototype column. Active tome inventory is stored in profile_tomes.
@@ -40,10 +42,12 @@ data class GameProfile(
     val xpProgress: Float
         get() = (xp.toFloat() / xpForNextLevel).coerceIn(0f, 1f)
 
+    @Deprecated("Use ProfileSoundDao.isUnlocked")
     fun hasSound(soundId: String): Boolean {
         return unlockedSounds.split(",").contains(soundId)
     }
 
+    @Deprecated("Use ProfileBackgroundDao.isUnlocked")
     fun hasBackground(backgroundId: String): Boolean {
         return unlockedBackgrounds.split(",").contains(backgroundId)
     }

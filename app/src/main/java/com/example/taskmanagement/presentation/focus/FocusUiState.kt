@@ -55,16 +55,21 @@ data class FocusUiState(
     // Game
     val gameProfile: GameProfile? = null,
     val selectedSoundId: String? = "rain",
+    val unlockedSoundIds: Set<String> = emptySet(),
+    val unlockedBackgroundIds: Set<String> = emptySet(),
     val tomeCounts: Map<String, Int> = emptyMap(),
+    val guardianItemCounts: Map<String, Int> = emptyMap(),
     val armedTomeId: String? = null,
-    val showPenaltyWarning: Boolean = false,
+    val showRetreatDialog: Boolean = false,
 
     val showSessionCompletePopup: Boolean = false,
 
     val showBreakActivityPopup: Boolean = false,
     val breakActivitySuggestion: BreakActivitySuggestion? = null,
     val lootDrop: LootItem? = null,
-    val levelUp: LevelUpInfo? = null
+    val bonusLootDrop: LootItem? = null,
+    val levelUp: LevelUpInfo? = null,
+    val feedbackMessage: String? = null
 
 ) {
     val selectedPreset: FocusPreset
@@ -72,6 +77,11 @@ data class FocusUiState(
 
     val isBreak: Boolean
         get() = phase == FocusPhase.BREAK
+
+    val selectedBackgroundId: String
+        get() = gameProfile?.selectedBackgroundId
+            ?.takeIf { it in unlockedBackgroundIds }
+            .orEmpty()
 
     val phaseTitle: String
         get() = if (isBreak) "Break Time" else "Study Time"
@@ -89,4 +99,11 @@ data class FocusUiState(
 
     val elapsedProgress: Float
         get() = (1f - remainingProgress).coerceIn(0f, 1f)
+
+    val isEarlyRetreat: Boolean
+        get() {
+            if (phase != FocusPhase.STUDY) return false
+            val elapsed = selectedPreset.studySeconds - timeLeft
+            return elapsed > 0 && elapsed < selectedPreset.studySeconds / 2
+        }
 }
