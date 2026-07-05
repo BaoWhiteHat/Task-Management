@@ -33,12 +33,14 @@ import com.example.taskmanagement.presentation.calendar.CalendarScreen
 import com.example.taskmanagement.presentation.focus.FocusScreen
 import com.example.taskmanagement.presentation.focus.ForestScreen
 import com.example.taskmanagement.presentation.focus.StoryScreen
+import com.example.taskmanagement.presentation.focus.StoryMode
 import com.example.taskmanagement.presentation.shop.ShopScreen
 import com.example.taskmanagement.presentation.home.TodayOverViewScreen
 import com.example.taskmanagement.presentation.hub.HubScreen
 import com.example.taskmanagement.presentation.my_tasks.MyTasksScreen
 import com.example.taskmanagement.presentation.new_task.NewTaskScreen
 import com.example.taskmanagement.presentation.navigateToSingleTop
+import com.example.taskmanagement.presentation.tasks.isTaskOverdue
 
 sealed class Screen(
     val route: String,
@@ -54,7 +56,7 @@ sealed class Screen(
     object Focus : Screen("focus")
     object Forest : Screen("forest")
     object Achievements : Screen("achievements")
-    object Story : Screen("story")
+    object Notebook : Screen("notebook")
     object Shop : Screen("shop")
     object Hub : Screen("hub")
 }
@@ -122,6 +124,13 @@ fun TaskNavigation(
             TodayOverViewScreen(
                 modifier = modifier,
                 onStartFocus = { navController.navigateToSingleTop(Screen.MyTasks.route) },
+                onTaskFocus = { task ->
+                    navController.navigate(
+                        "${Screen.Focus.route}?taskId=${task.id}&taskTitle=${Uri.encode(task.title)}" +
+                                "&tag=${Uri.encode(task.tags)}&priority=${Uri.encode(task.priority)}" +
+                                "&cursed=${isTaskOverdue(task)}"
+                    )
+                },
                 onOpenHub = { navController.navigate(Screen.Hub.route) }
             )
         }
@@ -131,12 +140,13 @@ fun TaskNavigation(
         composable(route = Screen.Calendar.route) { CalendarScreen(modifier = modifier) }
 
         composable(
-            route = "${Screen.Focus.route}?taskId={taskId}&taskTitle={taskTitle}&tag={tag}&priority={priority}",
+            route = "${Screen.Focus.route}?taskId={taskId}&taskTitle={taskTitle}&tag={tag}&priority={priority}&cursed={cursed}",
             arguments = listOf(
                 navArgument("taskId") { type = NavType.IntType; defaultValue = -1 },
                 navArgument("taskTitle") { type = NavType.StringType; defaultValue = "" },
                 navArgument("tag") { type = NavType.StringType; defaultValue = "" },
-                navArgument("priority") { type = NavType.StringType; defaultValue = "" }
+                navArgument("priority") { type = NavType.StringType; defaultValue = "" },
+                navArgument("cursed") { type = NavType.BoolType; defaultValue = false }
             )
         ) { backStackEntry ->
             val taskId = backStackEntry.arguments
@@ -158,11 +168,14 @@ fun TaskNavigation(
                 ?.let { Uri.decode(it) }
                 .orEmpty()
 
+            val cursed = backStackEntry.arguments?.getBoolean("cursed", false) ?: false
+
             FocusScreen(
                 taskId = taskId,
                 taskTitle = taskTitle,
                 taskTag = tag,
                 taskPriority = priority,
+                isCursedEncounter = cursed,
                 onNavigateBack = { navController.popBackStack() },
                 onOpenForest = { navController.navigate(Screen.Forest.route) }
             )
@@ -172,7 +185,7 @@ fun TaskNavigation(
             ForestScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onOpenAchievements = { navController.navigate(Screen.Achievements.route) },
-                onOpenStory = { navController.navigate(Screen.Story.route) },
+                onOpenStory = { navController.navigate(Screen.Notebook.route) },
                 onOpenShop = { navController.navigate(Screen.Shop.route) }
             )
         }
@@ -181,8 +194,9 @@ fun TaskNavigation(
             AchievementsScreen(onNavigateBack = { navController.popBackStack() })
         }
 
-        composable(route = Screen.Story.route) {
+        composable(route = Screen.Notebook.route) {
             StoryScreen(
+                mode = StoryMode.NOTEBOOK,
                 onNavigateBack = { navController.popBackStack() },
                 onBegin = { navController.popBackStack() }
             )
@@ -195,7 +209,7 @@ fun TaskNavigation(
         composable(route = Screen.Hub.route) {
             HubScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onOpenStory = { navController.navigate(Screen.Story.route) },
+                onOpenNotebook = { navController.navigate(Screen.Notebook.route) },
                 onOpenAchievements = { navController.navigate(Screen.Achievements.route) },
                 onOpenShop = { navController.navigate(Screen.Shop.route) },
                 onStartFocus = { navController.navigateToSingleTop(Screen.MyTasks.route) }

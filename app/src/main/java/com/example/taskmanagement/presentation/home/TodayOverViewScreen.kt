@@ -65,6 +65,7 @@ import com.example.taskmanagement.presentation.rewards.DailyRewardsButton
 fun TodayOverViewScreen(
     modifier: Modifier = Modifier,
     onStartFocus: () -> Unit = {},
+    onTaskFocus: (Task) -> Unit = {},
     onOpenHub: () -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -75,6 +76,7 @@ fun TodayOverViewScreen(
         onTaskCheckedChanged = viewModel::onTaskCheckedChange,
         onSortChanged = viewModel::onSortChanged,
         onStartFocus = onStartFocus,
+        onTaskFocus = onTaskFocus,
         onOpenHub = onOpenHub,
         modifier = modifier
     )
@@ -88,6 +90,7 @@ private fun TodayOverViewScreen(
     onTaskCheckedChanged: (Task, Boolean) -> Unit,
     onSortChanged: (SortOrder) -> Unit,
     onStartFocus: () -> Unit = {},
+    onTaskFocus: (Task) -> Unit = {},
     onOpenHub: () -> Unit = {}
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
@@ -160,7 +163,8 @@ private fun TodayOverViewScreen(
                     items(state.tasks, key = { it.id }) { task ->
                         TodayTask(
                             task = task,
-                            onCheckedChange = { onTaskCheckedChanged(task, it) }
+                            onCheckedChange = { onTaskCheckedChanged(task, it) },
+                            onFocusClick = { onTaskFocus(task) }
                         )
                     }
                 }

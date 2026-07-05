@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import com.example.taskmanagement.presentation.tasks.isTaskOverdue
 
 enum class SyncStatus {
     IDLE,
@@ -39,7 +40,7 @@ class HomeViewModel(
 ): ViewModel() {
     private val _sortOrder = MutableStateFlow(SortOrder.DEFAULT)
     private val _syncStatus = MutableStateFlow(SyncStatus.IDLE)
-    private val _todayTasksFlow = taskRepository.getTasksForDate(LocalDate.now())
+    private val _todayTasksFlow = taskRepository.getAllTasks()
 
     val uiState: StateFlow<HomeUIState> = combine(
         _todayTasksFlow,
@@ -47,7 +48,11 @@ class HomeViewModel(
         _sortOrder
     ) {
         tasks, syncStatus, sortOrder ->
-        val sortedTasks = sortedTasks(tasks, sortOrder)
+        val today = LocalDate.now()
+        val visibleTasks = tasks.filter { task ->
+            task.dueDate == today || isTaskOverdue(task)
+        }
+        val sortedTasks = sortedTasks(visibleTasks, sortOrder)
         val completedCount = sortedTasks.count { it.isCompleted }
         val remainingCount = sortedTasks.size - completedCount
         HomeUIState(

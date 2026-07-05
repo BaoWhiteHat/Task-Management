@@ -9,7 +9,7 @@ data class GameProfile(
     val id: Int = 1,
     val xp: Int = 0,
     val level: Int = 3,
-    val coins: Int = 1000,
+    val coins: Int = 10000,
     val totalSessions: Int = 0,
     val streakDays: Int = 0,
     val bestStreak: Int = 0,

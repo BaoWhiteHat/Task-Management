@@ -67,7 +67,7 @@ private val Pixel = FontFamily.Monospace
 @Composable
 fun HubScreen(
     onNavigateBack: () -> Unit = {},
-    onOpenStory: () -> Unit = {},
+    onOpenNotebook: () -> Unit = {},
     onOpenAchievements: () -> Unit = {},
     onOpenShop: () -> Unit = {},
     onStartFocus: () -> Unit = {},
@@ -134,7 +134,7 @@ fun HubScreen(
                         .clip(CircleShape)
                         .background(Surface1)
                         .border(0.5.dp, GreenDark, CircleShape)
-                        .clickable { onOpenStory() },
+                        .clickable { onOpenNotebook() },
                     contentAlignment = Alignment.Center
                 ) { Text("\uD83D\uDCD6", fontSize = 16.sp) }
 
@@ -199,6 +199,12 @@ fun HubScreen(
                             title = "Achievements",
                             subtitle = achSubtitle,
                             onClick = onOpenAchievements
+                        )
+                        HubCard(
+                            icon = "\uD83D\uDCD6",
+                            title = "Adventurer's Notebook",
+                            subtitle = "Learn how quests, battles, rewards, and guardian items work.",
+                            onClick = onOpenNotebook
                         )
                     }
                 }

@@ -37,6 +37,7 @@ import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.models.dummyTasks
 import com.example.taskmanagement.presentation.navigation.Screen
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+import com.example.taskmanagement.presentation.tasks.isTaskOverdue
 
 @Composable
 fun MyTasksScreen(
@@ -51,8 +52,9 @@ fun MyTasksScreen(
         onTaskCheckedChange = viewModel::onTaskCheckedChange,
         onFocusClick = { task ->
             navController.navigate(
-                "${Screen.Focus.route}?taskId=${task.id}&taskTitle=${Uri.encode(task.title)}" +
-                        "&tag=${Uri.encode(task.tags)}&priority=${Uri.encode(task.priority)}"
+                        "${Screen.Focus.route}?taskId=${task.id}&taskTitle=${Uri.encode(task.title)}" +
+                        "&tag=${Uri.encode(task.tags)}&priority=${Uri.encode(task.priority)}" +
+                        "&cursed=${isTaskOverdue(task)}"
             )
         },
         modifier = modifier
