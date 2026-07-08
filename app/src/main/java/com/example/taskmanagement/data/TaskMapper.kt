@@ -22,6 +22,9 @@ object TaskMapper {
                 priority = dtoItem.priority,
                 reminderEnabled = dtoItem.reminderEnabled,
                 dueDate = safeDueDate,
+                dueHour = dtoItem.dueHour,
+                dueMinute = dtoItem.dueMinute,
+                estimatedMinutes = dtoItem.estimatedMinutes.coerceIn(30, 480),
                 tags = dtoItem.tags,
                 isCompleted = dtoItem.isCompleted,
                 syncStatus = SyncStatus.SYNCED
@@ -31,12 +34,15 @@ object TaskMapper {
 
     fun mapEntityToDto(entity: Task): TaskDtoItem {
         return TaskDtoItem(
-            id = if (entity.remoteId.isNotBlank()) entity.remoteId.toInt() else 0,
+            id = entity.remoteId.trim().toIntOrNull() ?: 0,
             title = entity.title,
             description = entity.description,
             priority = entity.priority,
             reminderEnabled = entity.reminderEnabled,
             dueDate = entity.dueDate.toString(), // Convert LocalDate to a standard "YYYY-MM-DD" string
+            dueHour = entity.dueHour,
+            dueMinute = entity.dueMinute,
+            estimatedMinutes = entity.estimatedMinutes,
             tags = entity.tags,
             isCompleted = entity.isCompleted
         )

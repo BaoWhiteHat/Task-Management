@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.models.dummyTasks
-import com.example.taskmanagement.presentation.my_tasks.TaskItemComponent
+import com.example.taskmanagement.presentation.tasks.TaskQuestCard
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -197,7 +197,7 @@ private fun CalendarScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(state.tasksForSelectedDate, key = { it.id }) { task ->
-                    TaskItemComponent(
+                    TaskQuestCard(
                         task = task,
                         onCheckedChange = { isChecked ->
                             onTaskCheckedChange(task, isChecked)

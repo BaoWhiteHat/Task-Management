@@ -3,6 +3,7 @@ package com.example.taskmanagement.presentation.quest
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.example.taskmanagement.data.local.AppDatabase
 import com.example.taskmanagement.data.local.models.FocusSession
 import com.example.taskmanagement.data.local.models.QuestClaim
@@ -76,6 +77,10 @@ class QuestViewModel : ViewModel() {
         val weeklyKey = periodKey(QuestPeriod.WEEKLY)
 
         viewModelScope.launch {
+            db.gameProfileDao().createProfile()
+        }
+
+        viewModelScope.launch {
             combine(
                 db.focusSessionDao().getAllFocusSessions(),
                 db.questClaimDao().claimedForPeriod(dailyKey),
@@ -141,11 +146,22 @@ class QuestViewModel : ViewModel() {
             val sessions = db.focusSessionDao().getAllFocusSessions().first()
             if (progressFor(quest, sessions) < quest.target) return@launch
 
-            db.questClaimDao().claim(QuestClaim(questId = quest.id, periodKey = key))
-            if (quest.coins > 0) db.gameProfileDao().addCoins(quest.coins)
             val rolled = quest.rewardRarity?.let { rollLootItemOfRarity(it) }
-            rolled?.let { db.lootInventoryDao().addItem(it.id, 1) }
-            _claimedReward.value = ClaimedReward(quest.coins, rolled)
+            var claimed = false
+
+            db.withTransaction {
+                db.gameProfileDao().createProfile()
+                if (db.questClaimDao().isClaimed(quest.id, key) > 0) return@withTransaction
+
+                db.questClaimDao().claim(QuestClaim(questId = quest.id, periodKey = key))
+                if (quest.coins > 0) db.gameProfileDao().addCoins(quest.coins)
+                rolled?.let { db.lootInventoryDao().addItem(it.id, 1) }
+                claimed = true
+            }
+
+            if (claimed) {
+                _claimedReward.value = ClaimedReward(quest.coins, rolled)
+            }
         }
     }
 
@@ -160,11 +176,22 @@ class QuestViewModel : ViewModel() {
             val allDone = questsFor(period).all { progressFor(it, sessions) >= it.target }
             if (!allDone) return@launch
 
-            db.questClaimDao().claim(QuestClaim(questId = bonus.id, periodKey = key))
-            db.gameProfileDao().addCoins(bonus.coins)
             val rolled = rollLootItemOfRarity(bonus.rewardRarity)
-            db.lootInventoryDao().addItem(rolled.id, 1)
-            _claimedReward.value = ClaimedReward(bonus.coins, rolled)
+            var claimed = false
+
+            db.withTransaction {
+                db.gameProfileDao().createProfile()
+                if (db.questClaimDao().isClaimed(bonus.id, key) > 0) return@withTransaction
+
+                db.questClaimDao().claim(QuestClaim(questId = bonus.id, periodKey = key))
+                db.gameProfileDao().addCoins(bonus.coins)
+                db.lootInventoryDao().addItem(rolled.id, 1)
+                claimed = true
+            }
+
+            if (claimed) {
+                _claimedReward.value = ClaimedReward(bonus.coins, rolled)
+            }
         }
     }
 

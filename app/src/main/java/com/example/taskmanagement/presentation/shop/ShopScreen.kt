@@ -605,6 +605,7 @@ private fun GuardianItemRow(
             .clip(RoundedCornerShape(12.dp))
             .background(Surface1)
             .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+            .clickable(enabled = canAfford, onClick = onBuy)
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -652,7 +653,6 @@ private fun GuardianItemRow(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .background(Surface2)
-                    .clickable(enabled = canAfford, onClick = onBuy)
                     .padding(horizontal = 9.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {

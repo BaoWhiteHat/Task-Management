@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 import com.example.taskmanagement.presentation.tasks.isTaskOverdue
 
 enum class SyncStatus {
@@ -32,7 +33,8 @@ data class HomeUIState(
     val completedCount: Int = 0,
     val remainingCount: Int = 0,
     val sycStatus: SyncStatus = SyncStatus.IDLE,
-    val sortOrder: SortOrder = SortOrder.DEFAULT
+    val sortOrder: SortOrder = SortOrder.DEFAULT,
+    val currentTime: LocalDateTime = LocalDateTime.now()
 )
 
 class HomeViewModel(
@@ -40,27 +42,39 @@ class HomeViewModel(
 ): ViewModel() {
     private val _sortOrder = MutableStateFlow(SortOrder.DEFAULT)
     private val _syncStatus = MutableStateFlow(SyncStatus.IDLE)
+    private val _currentTime = MutableStateFlow(LocalDateTime.now())
     private val _todayTasksFlow = taskRepository.getAllTasks()
+
+    init {
+        viewModelScope.launch {
+            while (true) {
+                delay(60_000)
+                _currentTime.value = LocalDateTime.now()
+            }
+        }
+    }
 
     val uiState: StateFlow<HomeUIState> = combine(
         _todayTasksFlow,
         _syncStatus,
-        _sortOrder
+        _sortOrder,
+        _currentTime
     ) {
-        tasks, syncStatus, sortOrder ->
+        tasks, syncStatus, sortOrder, currentTime ->
         val today = LocalDate.now()
-        val visibleTasks = tasks.filter { task ->
-            task.dueDate == today || isTaskOverdue(task)
+        val actionableTasks = tasks.filter { task ->
+            isTaskOverdue(task) || (!task.isCompleted && task.dueDate == today)
         }
-        val sortedTasks = sortedTasks(visibleTasks, sortOrder)
-        val completedCount = sortedTasks.count { it.isCompleted }
-        val remainingCount = sortedTasks.size - completedCount
+        val todayTasks = tasks.filter { it.dueDate == today }
+        val completedTodayCount = todayTasks.count { it.isCompleted }
+        val remainingTodayCount = todayTasks.count { !it.isCompleted }
         HomeUIState(
-            tasks = sortedTasks,
-            completedCount = completedCount,
-            remainingCount = remainingCount,
+            tasks = sortedTasks(actionableTasks, sortOrder),
+            completedCount = completedTodayCount,
+            remainingCount = remainingTodayCount,
             sycStatus = syncStatus,
-            sortOrder = sortOrder
+            sortOrder = sortOrder,
+            currentTime = currentTime
         )
     }.stateIn(
         scope = viewModelScope,
@@ -70,10 +84,23 @@ class HomeViewModel(
 
     private fun sortedTasks(tasks: List<Task>, sortOrder: SortOrder): List<Task> {
         return when(sortOrder){
-            SortOrder.DEFAULT -> tasks
-            SortOrder.BY_PRIORITY_DESC -> tasks.sortedByDescending { it.priority }
-            SortOrder.BY_TITLE_ASC -> tasks.sortedBy { it.title }
+            SortOrder.DEFAULT,
+            SortOrder.BY_PRIORITY_DESC,
+            SortOrder.BY_TITLE_ASC -> tasks.sortedWith(
+                compareBy<Task> { homeTaskBucket(it) }
+                    .thenBy { it.dueHour }
+                    .thenBy { it.dueMinute }
+                    .thenBy { it.id }
+            )
+        }
+    }
 
+    private fun homeTaskBucket(task: Task): Int {
+        if (isTaskOverdue(task)) return 0
+        return when (task.priority.trim().lowercase()) {
+            "high" -> 1
+            "medium" -> 2
+            else -> 3
         }
     }
 

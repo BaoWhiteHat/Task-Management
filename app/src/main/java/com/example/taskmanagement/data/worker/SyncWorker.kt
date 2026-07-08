@@ -50,20 +50,24 @@ class SyncWorker(
                     }
 
                     SyncStatus.UPDATED -> {
-                        if (task.remoteId.isBlank()) {
+                        val remoteId = task.remoteId.trim().toIntOrNull()
+                        if (remoteId == null) {
+                            Log.w("SyncWorker", "Skipping update for task ${task.id}: invalid remoteId '${task.remoteId}'")
                             return@forEach
                         }
-                        apiService.updateTask(task.remoteId.toInt(), taskDtoItem)
+                        apiService.updateTask(remoteId, taskDtoItem)
                         taskDao.updateTask(task.copy(syncStatus = SyncStatus.SYNCED))
 
                     }
 
                     SyncStatus.DELETED -> {
-                        if (task.remoteId.isBlank()) {
+                        val remoteId = task.remoteId.trim().toIntOrNull()
+                        if (remoteId == null) {
+                            Log.w("SyncWorker", "Deleting local task ${task.id}: invalid remoteId '${task.remoteId}'")
                             taskDao.delete(task)
                             return@forEach
                         }
-                        apiService.deleteTask(task.remoteId.toInt())
+                        apiService.deleteTask(remoteId)
                         taskDao.delete(task)
 
                     }

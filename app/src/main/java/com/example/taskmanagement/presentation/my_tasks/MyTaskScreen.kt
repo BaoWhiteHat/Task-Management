@@ -36,6 +36,7 @@ import androidx.navigation.NavHostController
 import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.models.dummyTasks
 import com.example.taskmanagement.presentation.navigation.Screen
+import com.example.taskmanagement.presentation.tasks.TaskQuestCard
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 import com.example.taskmanagement.presentation.tasks.isTaskOverdue
 
@@ -54,7 +55,7 @@ fun MyTasksScreen(
             navController.navigate(
                         "${Screen.Focus.route}?taskId=${task.id}&taskTitle=${Uri.encode(task.title)}" +
                         "&tag=${Uri.encode(task.tags)}&priority=${Uri.encode(task.priority)}" +
-                        "&cursed=${isTaskOverdue(task)}"
+                        "&overdue=${isTaskOverdue(task)}"
             )
         },
         modifier = modifier
@@ -130,7 +131,7 @@ private fun MyTaskScreen(
                     state.tasksForSelectedTag,
                     key = { it.id }
                 ) { task ->
-                    TaskItemComponent(
+                    TaskQuestCard(
                         task = task,
                         onCheckedChange = { isCompleted ->
                             onTaskCheckedChange(task, isCompleted)

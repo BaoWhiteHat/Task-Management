@@ -71,6 +71,11 @@ class TaskRepositoryImpl(
 
     private fun applyReminder(task: Task) {
         if (task.reminderEnabled && !task.isCompleted) {
+            if (task.dueHour !in 0..23 || task.dueMinute !in 0..59) {
+                ReminderScheduler.cancel(appContext, task.id)
+                return
+            }
+
             val triggerAt = task.dueDate
                 .atTime(task.dueHour, task.dueMinute)
                 .atZone(ZoneId.systemDefault())

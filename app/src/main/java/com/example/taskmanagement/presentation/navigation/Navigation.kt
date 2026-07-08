@@ -128,7 +128,7 @@ fun TaskNavigation(
                     navController.navigate(
                         "${Screen.Focus.route}?taskId=${task.id}&taskTitle=${Uri.encode(task.title)}" +
                                 "&tag=${Uri.encode(task.tags)}&priority=${Uri.encode(task.priority)}" +
-                                "&cursed=${isTaskOverdue(task)}"
+                                "&overdue=${isTaskOverdue(task)}"
                     )
                 },
                 onOpenHub = { navController.navigate(Screen.Hub.route) }
@@ -140,13 +140,13 @@ fun TaskNavigation(
         composable(route = Screen.Calendar.route) { CalendarScreen(modifier = modifier) }
 
         composable(
-            route = "${Screen.Focus.route}?taskId={taskId}&taskTitle={taskTitle}&tag={tag}&priority={priority}&cursed={cursed}",
+            route = "${Screen.Focus.route}?taskId={taskId}&taskTitle={taskTitle}&tag={tag}&priority={priority}&overdue={overdue}",
             arguments = listOf(
                 navArgument("taskId") { type = NavType.IntType; defaultValue = -1 },
                 navArgument("taskTitle") { type = NavType.StringType; defaultValue = "" },
                 navArgument("tag") { type = NavType.StringType; defaultValue = "" },
                 navArgument("priority") { type = NavType.StringType; defaultValue = "" },
-                navArgument("cursed") { type = NavType.BoolType; defaultValue = false }
+                navArgument("overdue") { type = NavType.BoolType; defaultValue = false }
             )
         ) { backStackEntry ->
             val taskId = backStackEntry.arguments
@@ -168,14 +168,14 @@ fun TaskNavigation(
                 ?.let { Uri.decode(it) }
                 .orEmpty()
 
-            val cursed = backStackEntry.arguments?.getBoolean("cursed", false) ?: false
+            val overdue = backStackEntry.arguments?.getBoolean("overdue", false) ?: false
 
             FocusScreen(
                 taskId = taskId,
                 taskTitle = taskTitle,
                 taskTag = tag,
                 taskPriority = priority,
-                isCursedEncounter = cursed,
+                isOverdueEncounter = overdue,
                 onNavigateBack = { navController.popBackStack() },
                 onOpenForest = { navController.navigate(Screen.Forest.route) }
             )

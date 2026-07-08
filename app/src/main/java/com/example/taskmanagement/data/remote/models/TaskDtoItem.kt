@@ -8,6 +8,12 @@ data class TaskDtoItem(
     val description: String = "",
     @SerializedName("dueDate")
     val dueDate: String = "",
+    @SerializedName("dueHour")
+    val dueHour: Int = 9,
+    @SerializedName("dueMinute")
+    val dueMinute: Int = 0,
+    @SerializedName("estimatedMinutes")
+    val estimatedMinutes: Int = 120,
     @SerializedName("id")
     val id: Int = 0,
     @SerializedName("isCompleted")

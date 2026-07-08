@@ -15,6 +15,7 @@ data class Task(
     val dueDate: LocalDate,
     val dueHour: Int = 9,
     val dueMinute: Int = 0,
+    val estimatedMinutes: Int = 120,
     val tags: String,
     val isCompleted: Boolean = false,
     val syncStatus: SyncStatus = SyncStatus.CREATED

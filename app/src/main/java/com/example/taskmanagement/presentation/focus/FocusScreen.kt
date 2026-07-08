@@ -18,7 +18,7 @@ fun FocusScreen(
     taskTitle: String = "",
     taskTag: String = "",
     taskPriority: String = "",
-    isCursedEncounter: Boolean = false,
+    isOverdueEncounter: Boolean = false,
     onNavigateBack: () -> Unit = {},
     onOpenForest: () -> Unit = {},
     viewModel: FocusViewModel = viewModel()
@@ -64,7 +64,7 @@ fun FocusScreen(
         FocusPage.SETUP -> {
             FocusSetupScreen(
                 taskTitle = taskTitle,
-                isCursedEncounter = isCursedEncounter,
+                isOverdueEncounter = isOverdueEncounter,
                 state = state,
                 onNavigateBack = onNavigateBack,
                 onSelectPreset = viewModel::selectPreset,

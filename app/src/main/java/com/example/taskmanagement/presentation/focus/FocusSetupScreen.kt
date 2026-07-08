@@ -39,7 +39,7 @@ import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 @Composable
 fun FocusSetupScreen(
     taskTitle: String,
-    isCursedEncounter: Boolean = false,
+    isOverdueEncounter: Boolean = false,
     state: FocusUiState,
     onNavigateBack: () -> Unit,
     onSelectPreset: (Int) -> Unit,
@@ -68,7 +68,7 @@ fun FocusSetupScreen(
             XpLevelBar(profile = profile)
         }
         if (taskTitle.isNotBlank()) {
-            FocusTaskCard(taskTitle = taskTitle, isCursedEncounter = isCursedEncounter)
+            FocusTaskCard(taskTitle = taskTitle, isOverdueEncounter = isOverdueEncounter)
         }
         Text(
             text = "Choose your focus plan",
@@ -351,7 +351,7 @@ private fun XpLevelBar(
 }
 
 @Composable
-private fun FocusTaskCard(taskTitle: String, isCursedEncounter: Boolean) {
+private fun FocusTaskCard(taskTitle: String, isOverdueEncounter: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -360,16 +360,16 @@ private fun FocusTaskCard(taskTitle: String, isCursedEncounter: Boolean) {
             .padding(14.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            if (isCursedEncounter) {
+            if (isOverdueEncounter) {
                 Text(
-                    text = "CURSED ENCOUNTER",
+                    text = "OVERDUE QUEST",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = androidx.compose.ui.graphics.Color(0xFFFF8A65),
                     letterSpacing = 1.sp
                 )
                 Text(
-                    text = "Complete this focus battle to weaken the curse.",
+                    text = "Focus on this task to get it back on track.",
                     style = MaterialTheme.typography.bodySmall,
                     color = TaskTheme.colors.subText
                 )

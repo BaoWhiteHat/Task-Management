@@ -60,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taskmanagement.presentation.my_tasks.Priority
 import com.example.taskmanagement.presentation.my_tasks.TaskTag
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+import com.example.taskmanagement.presentation.tasks.formatEstimatedDuration
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -84,6 +85,7 @@ fun NewTaskScreen(
         onDescriptionChange = viewModel::onDescriptionChange,
         onDueDateChange = viewModel::onDueDateChange,
         onTimeChange = viewModel::onTimeChange,
+        onEstimatedDurationChange = viewModel::onEstimatedDurationChange,
         onPriorityChange = viewModel::onPriorityChange,
         onTagChange = viewModel::onTagChange,
         onCreateTask = viewModel::createTask,
@@ -99,6 +101,7 @@ private fun NewTaskScreen(
     onDescriptionChange: (String) -> Unit,
     onDueDateChange: (LocalDate) -> Unit,
     onTimeChange: (Int, Int) -> Unit,
+    onEstimatedDurationChange: (Int, Int) -> Unit,
     onPriorityChange: (Priority) -> Unit,
     onTagChange: (TaskTag) -> Unit,
     onReminderChange: (Boolean) -> Unit,
@@ -173,9 +176,11 @@ private fun NewTaskScreen(
                     dueDate = state.dueDate,
                     dueHour = state.dueHour,
                     dueMinute = state.dueMinute,
+                    estimatedMinutes = state.estimatedMinutes,
                     selectedPriority = state.selectedPriority,
                     onDueDateChange = onDueDateChange,
                     onTimeChange = onTimeChange,
+                    onEstimatedDurationChange = onEstimatedDurationChange,
                     onPriorityChange = onPriorityChange
                 )
                 2 -> StepTagReminder(
@@ -306,9 +311,11 @@ private fun StepDatePriority(
     dueDate: LocalDate,
     dueHour: Int,
     dueMinute: Int,
+    estimatedMinutes: Int,
     selectedPriority: Priority,
     onDueDateChange: (LocalDate) -> Unit,
     onTimeChange: (Int, Int) -> Unit,
+    onEstimatedDurationChange: (Int, Int) -> Unit,
     onPriorityChange: (Priority) -> Unit
 ) {
     val context = LocalContext.current
@@ -366,7 +373,7 @@ private fun StepDatePriority(
         Spacer(Modifier.height(20.dp))
 
         Text(
-            text = "Due Time",
+            text = "Reminder Time",
             style = MaterialTheme.typography.labelLarge,
             color = TaskTheme.colors.subText
         )
@@ -392,6 +399,13 @@ private fun StepDatePriority(
                     )
                 }
             }
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        EstimatedDurationPicker(
+            estimatedMinutes = estimatedMinutes,
+            onDurationChange = onEstimatedDurationChange
         )
 
         Spacer(Modifier.height(24.dp))
@@ -439,6 +453,90 @@ private fun StepDatePriority(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun EstimatedDurationPicker(
+    estimatedMinutes: Int,
+    onDurationChange: (Int, Int) -> Unit
+) {
+    val selectedHours = estimatedMinutes / 60
+    val selectedMinutes = estimatedMinutes % 60
+
+    Text(
+        text = "Estimated Duration",
+        style = MaterialTheme.typography.labelLarge,
+        color = TaskTheme.colors.subText
+    )
+    Spacer(Modifier.height(6.dp))
+    Text(
+        text = formatEstimatedDuration(estimatedMinutes),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.primary
+    )
+    Spacer(Modifier.height(10.dp))
+    Text("Hours", style = MaterialTheme.typography.labelSmall, color = TaskTheme.colors.subText)
+    Spacer(Modifier.height(6.dp))
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        (0..8).forEach { hours ->
+            val enabled = !(hours == 0 && selectedMinutes == 0) &&
+                    !(hours == 8 && selectedMinutes == 30)
+            DurationOption(
+                text = "${hours}h",
+                selected = selectedHours == hours,
+                enabled = enabled,
+                onClick = { onDurationChange(hours, selectedMinutes) }
+            )
+        }
+    }
+    Spacer(Modifier.height(10.dp))
+    Text("Minutes", style = MaterialTheme.typography.labelSmall, color = TaskTheme.colors.subText)
+    Spacer(Modifier.height(6.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(0, 30).forEach { minutes ->
+            val enabled = !(selectedHours == 0 && minutes == 0) &&
+                    !(selectedHours == 8 && minutes == 30)
+            DurationOption(
+                text = "${minutes}m",
+                selected = selectedMinutes == minutes,
+                enabled = enabled,
+                onClick = { onDurationChange(selectedHours, minutes) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DurationOption(
+    text: String,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    val accent = MaterialTheme.colorScheme.primary
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(9.dp))
+            .background(if (selected) accent else MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = when {
+                selected -> MaterialTheme.colorScheme.onPrimary
+                enabled -> MaterialTheme.colorScheme.onSurfaceVariant
+                else -> TaskTheme.colors.subText.copy(alpha = .35f)
+            }
+        )
     }
 }
 
@@ -513,7 +611,7 @@ private fun StepTagReminder(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "Notify me at the task's due time",
+                    text = "Notify me at the planned start time",
                     style = MaterialTheme.typography.bodySmall,
                     color = TaskTheme.colors.subText
                 )
@@ -540,6 +638,7 @@ private fun NewTaskScreenPrev() {
         onDescriptionChange = {},
         onDueDateChange = {},
         onTimeChange = { _, _ -> },
+        onEstimatedDurationChange = { _, _ -> },
         onPriorityChange = {},
         onTagChange = {},
         onReminderChange = {},

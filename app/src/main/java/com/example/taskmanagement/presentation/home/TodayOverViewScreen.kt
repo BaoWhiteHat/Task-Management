@@ -53,7 +53,7 @@ import com.example.taskmanagement.data.local.models.Task
 import com.example.taskmanagement.data.local.models.dummyTasks
 import com.example.taskmanagement.presentation.focus.GreenBright
 import com.example.taskmanagement.presentation.home.components.OverViewCard
-import com.example.taskmanagement.presentation.home.components.TodayTask
+import com.example.taskmanagement.presentation.tasks.TaskQuestCard
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -152,20 +152,34 @@ private fun TodayOverViewScreen(
             modifier = Modifier.weight(1f)
         ) {
             if (state.tasks.isEmpty()) {
-                EmptyTaskState(
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (state.completedCount > 0) {
+                    AllTasksClearedState(
+                        completedCount = state.completedCount,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    EmptyTaskState(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(state.tasks, key = { it.id }) { task ->
-                        TodayTask(
+                        TaskQuestCard(
                             task = task,
                             onCheckedChange = { onTaskCheckedChanged(task, it) },
                             onFocusClick = { onTaskFocus(task) }
                         )
+                    }
+                    if (state.completedCount > 0) {
+                        item(key = "completedTodaySummary") {
+                            CompletedTodaySummary(
+                                completedCount = state.completedCount
+                            )
+                        }
                     }
                 }
             }
@@ -361,6 +375,59 @@ private fun ProgressHeroCard(
 }
 
 @Composable
+private fun CompletedTodaySummary(
+    completedCount: Int,
+    modifier: Modifier = Modifier
+) {
+    val questLabel = if (completedCount == 1) "quest" else "quests"
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(TaskTheme.colors.successBg.copy(alpha = .55f))
+            .border(
+                width = 0.5.dp,
+                color = TaskTheme.colors.success.copy(alpha = .45f),
+                shape = MaterialTheme.shapes.medium
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = "$completedCount $questLabel cleared today",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = TaskTheme.colors.success
+        )
+    }
+}
+
+@Composable
+private fun AllTasksClearedState(
+    completedCount: Int,
+    modifier: Modifier = Modifier
+) {
+    val questLabel = if (completedCount == 1) "quest" else "quests"
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "All quests cleared today!",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = "$completedCount $questLabel completed",
+            style = MaterialTheme.typography.bodySmall,
+            color = TaskTheme.colors.subText
+        )
+    }
+}
+
+@Composable
 private fun EmptyTaskState(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
@@ -368,20 +435,9 @@ private fun EmptyTaskState(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "🎉",
-            style = MaterialTheme.typography.displayLarge
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(
-            text = "No tasks for today",
+            text = "No quests for today.",
             style = MaterialTheme.typography.titleMedium,
             color = TaskTheme.colors.subText
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = "Add a new task to get started!",
-            style = MaterialTheme.typography.bodySmall,
-            color = TaskTheme.colors.subText.copy(alpha = .7f)
         )
     }
 }

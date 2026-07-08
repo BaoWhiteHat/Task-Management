@@ -20,6 +20,7 @@ data class NewTaskUiState(
     val dueDate: LocalDate = LocalDate.now(),
     val dueHour: Int = 9,
     val dueMinute: Int = 0,
+    val estimatedMinutes: Int = 120,
     val selectedPriority: Priority = Priority.LOW,
     val selectedTag: TaskTag? = TaskTag.WORK,
     val isReminderEnabled: Boolean = false,
@@ -37,6 +38,10 @@ class NewTaskViewModel(
     fun onDescriptionChange(description: String) = _uiState.update { it.copy(description = description) }
     fun onDueDateChange(dueDate: LocalDate) = _uiState.update { it.copy(dueDate = dueDate) }
     fun onTimeChange(hour: Int, minute: Int) = _uiState.update { it.copy(dueHour = hour, dueMinute = minute) }
+    fun onEstimatedDurationChange(hours: Int, minutes: Int) {
+        val totalMinutes = (hours * 60 + minutes).coerceIn(30, 480)
+        _uiState.update { it.copy(estimatedMinutes = totalMinutes) }
+    }
     fun onPriorityChange(priority: Priority) = _uiState.update { it.copy(selectedPriority = priority) }
     fun onTagChange(tag: TaskTag) = _uiState.update { it.copy(selectedTag = tag) }
     fun onReminderChange(isEnabled: Boolean) = _uiState.update { it.copy(isReminderEnabled = isEnabled) }
@@ -63,6 +68,7 @@ class NewTaskViewModel(
                 dueDate = state.dueDate,
                 dueHour = state.dueHour,
                 dueMinute = state.dueMinute,
+                estimatedMinutes = state.estimatedMinutes,
                 tags = state.selectedTag.name,
                 isCompleted = false
             )
