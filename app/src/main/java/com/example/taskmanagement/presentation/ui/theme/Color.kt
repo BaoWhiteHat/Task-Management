@@ -2,6 +2,8 @@ package com.example.taskmanagement.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+val BrandGreen = Color(0xFFB7F34A)
+
 //  AURORA GREEN  (Light Theme)
 
 // Primary – Forest Green

@@ -14,7 +14,7 @@ private val RpgBgDeep       = Color(0xFF081105)
 private val RpgSurface1      = Color(0xFF101C0C)
 private val RpgSurface2      = Color(0xFF162610)
 private val RpgBorderSubtle  = Color(0xFF2D4A1E)
-private val RpgGreenBright   = Color(0xFFB7F34A)
+private val RpgGreenBright   = BrandGreen
 private val RpgGreenDark     = Color(0xFF4F9A1F)
 private val RpgAmber         = Color(0xFFFFB020)
 private val RpgTextPrimary   = Color(0xFFF2F8E8)
@@ -55,8 +55,8 @@ private val RpgScheme = darkColorScheme(
 )
 
 private val AuroraLightScheme = lightColorScheme(
-    primary            = AuroraGreen500,
-    onPrimary          = Color.White,
+    primary            = BrandGreen,
+    onPrimary          = LightOnBackground,
     primaryContainer   = AuroraGreen50,
     onPrimaryContainer = AuroraGreen900,
     secondary          = AuroraAmber,
@@ -107,6 +107,14 @@ data class TaskExtendedColors(
     val subText: Color,
     val cardBg: Color,
     val accentColor: Color,
+
+    val taskCardSurface: Color,
+    val taskCardBorder: Color,
+    val taskCardOverdueSurface: Color,
+    val taskCardOverdueBorder: Color,
+    val taskCardCompletedSurface: Color,
+    val taskCardCompletedBorder: Color,
+    val taskMetadataText: Color,
 )
 
 val RpgExtendedColors = TaskExtendedColors(
@@ -134,6 +142,49 @@ val RpgExtendedColors = TaskExtendedColors(
     subText     = RpgTextMuted,
     cardBg      = RpgSurface1,
     accentColor = RpgAmber,
+
+    taskCardSurface = Color(0xFF101A0C),
+    taskCardBorder = RpgBorderSubtle,
+    taskCardOverdueSurface = Color(0xFF24130F),
+    taskCardOverdueBorder = Color(0xFFFF7A6B).copy(alpha = .62f),
+    taskCardCompletedSurface = Color(0xFF13220D),
+    taskCardCompletedBorder = BrandGreen.copy(alpha = .46f),
+    taskMetadataText = RpgTextMuted,
+)
+
+val LightExtendedColors = TaskExtendedColors(
+    priorityHigh     = PriorityHigh,
+    priorityHighBg   = PriorityHighBg,
+    priorityMedium   = PriorityMedium,
+    priorityMediumBg = PriorityMediumBg,
+    priorityLow      = PriorityLow,
+    priorityLowBg    = PriorityLowBg,
+
+    tagWork        = TagWork,
+    tagWorkBg      = TagWorkBg,
+    tagPersonal    = TagPersonal,
+    tagPersonalBg  = TagPersonalBg,
+    tagHealth      = TagHealth,
+    tagHealthBg    = TagHealthBg,
+    tagOther       = TagOther,
+    tagOtherBg     = TagOtherBg,
+
+    success   = BrandGreen,
+    successBg = Color(0xFFF1FBE4),
+    warning   = AuroraAmber,
+    warningBg = AuroraAmberLight,
+
+    subText     = Color(0xFF6F7769),
+    cardBg      = LightCardBg,
+    accentColor = AuroraAmber,
+
+    taskCardSurface = Color.White,
+    taskCardBorder = Color(0xFFE2E6DE),
+    taskCardOverdueSurface = Color(0xFFFFF4F1),
+    taskCardOverdueBorder = Color(0xFFE8553A),
+    taskCardCompletedSurface = Color(0xFFFAFFF2),
+    taskCardCompletedBorder = BrandGreen,
+    taskMetadataText = Color(0xFF6F7769),
 )
 
 val LocalExtendedColors = staticCompositionLocalOf { RpgExtendedColors }
@@ -143,11 +194,14 @@ fun TaskManagementTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+    val colorScheme = if (darkTheme) RpgScheme else AuroraLightScheme
+    val extendedColors = if (darkTheme) RpgExtendedColors else LightExtendedColors
+
     androidx.compose.runtime.CompositionLocalProvider(
-        LocalExtendedColors provides RpgExtendedColors
+        LocalExtendedColors provides extendedColors
     ) {
         MaterialTheme(
-            colorScheme = RpgScheme,
+            colorScheme = colorScheme,
             typography = Typography,
             content = content
         )

@@ -61,6 +61,7 @@ import com.example.taskmanagement.presentation.my_tasks.Priority
 import com.example.taskmanagement.presentation.my_tasks.TaskTag
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 import com.example.taskmanagement.presentation.tasks.formatEstimatedDuration
+import com.example.taskmanagement.presentation.tasks.taskPriorityUi
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -422,33 +423,24 @@ private fun StepDatePriority(
         ) {
             Priority.entries.forEach { priority ->
                 val isSelected = selectedPriority == priority
-                val priorityColor = when (priority) {
-                    Priority.HIGH -> TaskTheme.colors.priorityHigh
-                    Priority.MEDIUM -> TaskTheme.colors.priorityMedium
-                    Priority.LOW -> TaskTheme.colors.priorityLow
-                }
-                val priorityBgColor = when (priority) {
-                    Priority.HIGH -> TaskTheme.colors.priorityHighBg
-                    Priority.MEDIUM -> TaskTheme.colors.priorityMediumBg
-                    Priority.LOW -> TaskTheme.colors.priorityLowBg
-                }
+                val priorityUi = taskPriorityUi(priority.name)
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) priorityColor else priorityBgColor)
+                        .background(if (isSelected) priorityUi.accentColor else priorityUi.badgeBackgroundColor)
                         .clickable { onPriorityChange(priority) }
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = priority.name,
+                        text = priorityUi.badgeLabel,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (isSelected)
                             MaterialTheme.colorScheme.onPrimary
-                        else priorityColor
+                        else priorityUi.accentColor
                     )
                 }
             }

@@ -42,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -154,12 +153,11 @@ private fun TodayOverViewScreen(
             if (state.tasks.isEmpty()) {
                 if (state.completedCount > 0) {
                     AllTasksClearedState(
-                        completedCount = state.completedCount,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 } else {
                     EmptyTaskState(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
             } else {
@@ -287,6 +285,7 @@ private fun ProgressHeroCard(
     LaunchedEffect(Unit) { animationPlayed = true }
 
     val accent = GreenBright
+    val progressTextColor = MaterialTheme.colorScheme.onSurface
 
     Box(
         modifier = modifier
@@ -306,7 +305,7 @@ private fun ProgressHeroCard(
                 Text(
                     text = "Today's Progress",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = .7f)
+                    color = progressTextColor.copy(alpha = .7f)
                 )
                 Spacer(Modifier.height(4.dp))
                 Row(
@@ -315,13 +314,13 @@ private fun ProgressHeroCard(
                     Text(
                         text = "$completedCount",
                         style = MaterialTheme.typography.displaySmall,
-                        color = Color.White,
+                        color = progressTextColor,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = " / $totalCount",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.White.copy(alpha = .6f),
+                        color = progressTextColor.copy(alpha = .6f),
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
@@ -329,7 +328,7 @@ private fun ProgressHeroCard(
                 Text(
                     text = "tasks completed",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = .7f)
+                    color = progressTextColor.copy(alpha = .7f)
                 )
             }
 
@@ -366,7 +365,7 @@ private fun ProgressHeroCard(
                 Text(
                     text = "${(animatedProgress * 100).toInt()}%",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
+                    color = progressTextColor,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -403,40 +402,46 @@ private fun CompletedTodaySummary(
 
 @Composable
 private fun AllTasksClearedState(
-    completedCount: Int,
     modifier: Modifier = Modifier
 ) {
-    val questLabel = if (completedCount == 1) "quest" else "quests"
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(TaskTheme.colors.successBg.copy(alpha = .55f))
+            .border(
+                width = 0.5.dp,
+                color = TaskTheme.colors.success.copy(alpha = .45f),
+                shape = MaterialTheme.shapes.medium
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Text(
             text = "All quests cleared today!",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.labelMedium,
+            color = TaskTheme.colors.success,
             fontWeight = FontWeight.SemiBold
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = "$completedCount $questLabel completed",
-            style = MaterialTheme.typography.bodySmall,
-            color = TaskTheme.colors.subText
         )
     }
 }
 
 @Composable
 private fun EmptyTaskState(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .55f))
+            .border(
+                width = 0.5.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = .45f),
+                shape = MaterialTheme.shapes.medium
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Text(
             text = "No quests for today.",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.labelMedium,
             color = TaskTheme.colors.subText
         )
     }
