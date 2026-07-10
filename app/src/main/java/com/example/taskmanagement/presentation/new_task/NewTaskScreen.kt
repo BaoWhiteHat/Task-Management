@@ -424,6 +424,11 @@ private fun StepDatePriority(
             Priority.entries.forEach { priority ->
                 val isSelected = selectedPriority == priority
                 val priorityUi = taskPriorityUi(priority.name)
+                val selectedTextColor = when (priority) {
+                    Priority.HIGH -> TaskTheme.colors.selectedPriorityHighText
+                    Priority.MEDIUM -> TaskTheme.colors.selectedPriorityMediumText
+                    Priority.LOW -> TaskTheme.colors.selectedPriorityLowText
+                }
 
                 Box(
                     modifier = Modifier
@@ -439,7 +444,7 @@ private fun StepDatePriority(
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (isSelected)
-                            MaterialTheme.colorScheme.onPrimary
+                            selectedTextColor
                         else priorityUi.accentColor
                     )
                 }
@@ -565,6 +570,11 @@ private fun StepTagReminder(
                     TaskTag.PERSONAL -> TaskTheme.colors.tagPersonalBg
                     TaskTag.HEALTH -> TaskTheme.colors.tagHealthBg
                 }
+                val selectedTextColor = when (tag) {
+                    TaskTag.WORK -> TaskTheme.colors.selectedTagWorkText
+                    TaskTag.PERSONAL -> TaskTheme.colors.selectedTagPersonalText
+                    TaskTag.HEALTH -> TaskTheme.colors.selectedTagHealthText
+                }
 
                 Box(
                     modifier = Modifier
@@ -578,7 +588,7 @@ private fun StepTagReminder(
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (isSelected)
-                            MaterialTheme.colorScheme.onPrimary
+                            selectedTextColor
                         else tagColor
                     )
                 }

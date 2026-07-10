@@ -87,8 +87,8 @@ fun taskCardBadge(task: Task): TaskCardBadgeUi {
         )
         task.isCompleted -> TaskCardBadgeUi(
             label = "Cleared",
-            color = TaskTheme.colors.success,
-            backgroundColor = TaskTheme.colors.success.copy(alpha = .14f)
+            color = TaskTheme.colors.successBadgeText,
+            backgroundColor = TaskTheme.colors.successBadgeBackground
         )
         else -> TaskCardBadgeUi(
             label = priorityUi.badgeLabel,

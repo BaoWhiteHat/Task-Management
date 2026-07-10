@@ -395,7 +395,7 @@ private fun CompletedTodaySummary(
             text = "$completedCount $questLabel cleared today",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
-            color = TaskTheme.colors.success
+            color = TaskTheme.colors.successText
         )
     }
 }
@@ -419,7 +419,7 @@ private fun AllTasksClearedState(
         Text(
             text = "All quests cleared today!",
             style = MaterialTheme.typography.labelMedium,
-            color = TaskTheme.colors.success,
+            color = TaskTheme.colors.successText,
             fontWeight = FontWeight.SemiBold
         )
     }

@@ -101,6 +101,10 @@ data class TaskExtendedColors(
 
     val success: Color,
     val successBg: Color,
+    val successText: Color,
+    val successBadgeBackground: Color,
+    val successBadgeText: Color,
+    val completedMetadataText: Color,
     val warning: Color,
     val warningBg: Color,
 
@@ -115,6 +119,13 @@ data class TaskExtendedColors(
     val taskCardCompletedSurface: Color,
     val taskCardCompletedBorder: Color,
     val taskMetadataText: Color,
+
+    val selectedPriorityHighText: Color,
+    val selectedPriorityMediumText: Color,
+    val selectedPriorityLowText: Color,
+    val selectedTagWorkText: Color,
+    val selectedTagPersonalText: Color,
+    val selectedTagHealthText: Color,
 )
 
 val RpgExtendedColors = TaskExtendedColors(
@@ -136,6 +147,10 @@ val RpgExtendedColors = TaskExtendedColors(
 
     success   = RpgGreenBright,
     successBg = Color(0xFF18260E),
+    successText = RpgGreenBright,
+    successBadgeBackground = RpgGreenBright.copy(alpha = .14f),
+    successBadgeText = RpgGreenBright,
+    completedMetadataText = RpgGreenBright,
     warning   = RpgAmber,
     warningBg = Color(0xFF2E2410),
 
@@ -150,12 +165,19 @@ val RpgExtendedColors = TaskExtendedColors(
     taskCardCompletedSurface = Color(0xFF13220D),
     taskCardCompletedBorder = BrandGreen.copy(alpha = .46f),
     taskMetadataText = RpgTextMuted,
+
+    selectedPriorityHighText = RpgBgDeep,
+    selectedPriorityMediumText = RpgBgDeep,
+    selectedPriorityLowText = RpgBgDeep,
+    selectedTagWorkText = RpgBgDeep,
+    selectedTagPersonalText = RpgBgDeep,
+    selectedTagHealthText = RpgBgDeep,
 )
 
 val LightExtendedColors = TaskExtendedColors(
     priorityHigh     = PriorityHigh,
     priorityHighBg   = PriorityHighBg,
-    priorityMedium   = PriorityMedium,
+    priorityMedium   = Color(0xFF8A5A00),
     priorityMediumBg = PriorityMediumBg,
     priorityLow      = PriorityLow,
     priorityLowBg    = PriorityLowBg,
@@ -171,6 +193,10 @@ val LightExtendedColors = TaskExtendedColors(
 
     success   = BrandGreen,
     successBg = Color(0xFFF1FBE4),
+    successText = Color(0xFF2F6F12),
+    successBadgeBackground = Color(0xFFF1FBE4),
+    successBadgeText = Color(0xFF2F6F12),
+    completedMetadataText = Color(0xFF2F6F12),
     warning   = AuroraAmber,
     warningBg = AuroraAmberLight,
 
@@ -185,6 +211,13 @@ val LightExtendedColors = TaskExtendedColors(
     taskCardCompletedSurface = Color(0xFFFAFFF2),
     taskCardCompletedBorder = BrandGreen,
     taskMetadataText = Color(0xFF6F7769),
+
+    selectedPriorityHighText = Color.White,
+    selectedPriorityMediumText = Color.White,
+    selectedPriorityLowText = Color.White,
+    selectedTagWorkText = Color.White,
+    selectedTagPersonalText = Color.White,
+    selectedTagHealthText = Color.White,
 )
 
 val LocalExtendedColors = staticCompositionLocalOf { RpgExtendedColors }

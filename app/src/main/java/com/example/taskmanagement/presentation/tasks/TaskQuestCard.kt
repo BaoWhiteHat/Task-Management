@@ -178,7 +178,7 @@ private fun TaskMetadataLine(
     overdue: Boolean
 ) {
     val metadataColor = when {
-        completed -> TaskTheme.colors.success.copy(alpha = .88f)
+        completed -> TaskTheme.colors.completedMetadataText
         overdue -> TaskOverdueAccent.copy(alpha = .88f)
         else -> TaskTheme.colors.taskMetadataText
     }
