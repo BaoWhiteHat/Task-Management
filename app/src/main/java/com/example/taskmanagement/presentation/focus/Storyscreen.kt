@@ -1,5 +1,7 @@
 package com.example.taskmanagement.presentation.focus
 
+import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -42,7 +44,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -54,7 +55,6 @@ enum class StoryMode {
     NOTEBOOK
 }
 
-private val BookMono = FontFamily.Monospace
 private val PaperTop = Color(0xFFF2E2BC)
 private val PaperBottom = Color(0xFFD9BF86)
 private val PaperBorder = Color(0xFF9A7135)
@@ -216,7 +216,7 @@ fun StoryScreen(
                         .clickable { if (page > 0) page-- else onNavigateBack() },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("\u2190", fontFamily = BookMono, fontSize = 18.sp, color = TextPrimary)
+                    Text("\u2190", fontFamily = TaskTheme.fontFamily, fontSize = 18.sp, color = TextPrimary)
                 }
                 Column(
                     modifier = Modifier.weight(1f),
@@ -224,7 +224,7 @@ fun StoryScreen(
                 ) {
                     Text(
                         screenTitle,
-                        fontFamily = BookMono,
+                        fontFamily = TaskTheme.fontFamily,
                         fontSize = if (mode == StoryMode.LORE) 14.sp else 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = ChronicleGold,
@@ -233,7 +233,7 @@ fun StoryScreen(
                     )
                     Text(
                         screenSubtitle,
-                        fontFamily = BookMono,
+                        fontFamily = TaskTheme.fontFamily,
                         fontSize = 9.sp,
                         color = TextMuted,
                         textAlign = TextAlign.Center
@@ -271,7 +271,7 @@ fun StoryScreen(
             ) {
                 Text(
                     "PAGE ${page + 1} / ${pages.size}",
-                    fontFamily = BookMono,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 10.sp,
                     color = TextMuted,
                     letterSpacing = 1.sp
@@ -307,7 +307,7 @@ fun StoryScreen(
                 ) {
                     Text(
                         if (page > 0) "Back" else "Close",
-                        fontFamily = BookMono,
+                        fontFamily = TaskTheme.fontFamily,
                         fontSize = 12.sp,
                         color = TextMuted
                     )
@@ -323,7 +323,7 @@ fun StoryScreen(
                 ) {
                     Text(
                         if (isLast) finalAction else "Continue",
-                        fontFamily = BookMono,
+                        fontFamily = TaskTheme.fontFamily,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = BgDeep
@@ -351,7 +351,7 @@ private fun BookPageContent(page: BookPage) {
             Box(Modifier.size(7.dp).clip(CircleShape).background(InkHeading))
             Text(
                 page.era.uppercase(),
-                fontFamily = BookMono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = InkHeading,
@@ -383,7 +383,7 @@ private fun BookPageContent(page: BookPage) {
 
         Text(
             page.title,
-            fontFamily = BookMono,
+            fontFamily = TaskTheme.fontFamily,
             fontSize = 19.sp,
             fontWeight = FontWeight.Bold,
             color = InkHeading,
@@ -391,13 +391,13 @@ private fun BookPageContent(page: BookPage) {
         )
         Text(
             "\u2726  \u2500\u2500\u2500  \u2726",
-            fontFamily = BookMono,
+            fontFamily = TaskTheme.fontFamily,
             fontSize = 12.sp,
             color = PaperBorder
         )
         Text(
             page.body,
-            fontFamily = BookMono,
+            fontFamily = TaskTheme.fontFamily,
             fontSize = 12.sp,
             lineHeight = 19.sp,
             color = InkBody,

@@ -1,5 +1,7 @@
 package com.example.taskmanagement.presentation.onboarding
 
+import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,7 +25,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,7 +41,6 @@ import com.example.taskmanagement.presentation.focus.Surface2
 import com.example.taskmanagement.presentation.focus.TextMuted
 import com.example.taskmanagement.presentation.focus.TextPrimary
 
-private val IntroMono = FontFamily.Monospace
 
 @Composable
 fun LegendIntroDialog(
@@ -101,14 +101,14 @@ fun LegendIntroDialog(
 
                 Text(
                     "BEFORE THE FIRST QUEST",
-                    fontFamily = IntroMono,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 10.sp,
                     color = AmberAccent,
                     letterSpacing = 2.sp
                 )
                 Text(
                     "Before Your Journey...",
-                    fontFamily = IntroMono,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
@@ -116,7 +116,7 @@ fun LegendIntroDialog(
                 )
                 Text(
                     "Would you like to read the history of this fallen world before you begin?",
-                    fontFamily = IntroMono,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 12.sp,
                     lineHeight = 19.sp,
                     color = TextMuted,
@@ -136,7 +136,7 @@ fun LegendIntroDialog(
                 ) {
                     Text(
                         "Read the History",
-                        fontFamily = IntroMono,
+                        fontFamily = TaskTheme.fontFamily,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = BgDeep
@@ -155,7 +155,7 @@ fun LegendIntroDialog(
                 ) {
                     Text(
                         "Skip for Now",
-                        fontFamily = IntroMono,
+                        fontFamily = TaskTheme.fontFamily,
                         fontSize = 12.sp,
                         color = TextMuted
                     )

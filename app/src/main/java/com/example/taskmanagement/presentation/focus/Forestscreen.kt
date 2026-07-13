@@ -1,5 +1,7 @@
 package com.example.taskmanagement.presentation.focus
 
+import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -34,7 +36,6 @@ import com.example.taskmanagement.R
 import com.example.taskmanagement.presentation.achievements.AchievementsViewModel
 import com.example.taskmanagement.presentation.achievements.CelebrationDialog
 
-private val ForestMono = FontFamily.Monospace
 private val Fire = Color(0xFFFF8A3D)
 
 @Composable
@@ -63,7 +64,10 @@ fun ForestScreen(
     val weekSessions = sessions.filter { it.completedAtMillis >= weekCutoff }
     val weekMinutes = weekSessions.sumOf { it.studyMinutes }
 
-    Box(modifier = Modifier.fillMaxSize().background(BgDeep)) {
+    val scheme = MaterialTheme.colorScheme
+    val colors = TaskTheme.colors
+
+    Box(modifier = Modifier.fillMaxSize().background(scheme.background)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -79,13 +83,13 @@ fun ForestScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Surface1)
-                        .border(0.5.dp, BorderSubtle, CircleShape)
+                        .background(scheme.surface)
+                        .border(0.5.dp, scheme.outline, CircleShape)
                         .clickable(onClick = onNavigateBack),
                     contentAlignment = Alignment.Center
-                ) { Icon(Icons.Default.KeyboardArrowLeft, "Back", tint = TextPrimary) }
+                ) { Icon(Icons.Default.KeyboardArrowLeft, "Back", tint = scheme.onSurface) }
 
-                Text("MY PROGRESS", fontFamily = ForestMono, fontSize = 13.sp, color = GreenBright, letterSpacing = 2.sp)
+                Text("MY PROGRESS", fontFamily = TaskTheme.fontFamily, fontSize = 13.sp, color = scheme.primary, letterSpacing = 2.sp)
                 Spacer(Modifier.size(40.dp))
             }
 
@@ -149,16 +153,16 @@ fun ForestScreen(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     StatCell("\uD83D\uDD25", "$streak", "day streak", Fire, Modifier.weight(1f))
-                    StatCell("\uD83C\uDF31", "$sessionCount", "sessions done", GreenBright, Modifier.weight(1f))
-                    StatCell("\u23F3", fmtTime(totalMinutes), "focused", AmberAccent, Modifier.weight(1f))
+                    StatCell("\uD83C\uDF31", "$sessionCount", "sessions done", scheme.primary, Modifier.weight(1f))
+                    StatCell("\u23F3", fmtTime(totalMinutes), "focused", colors.accentColor, Modifier.weight(1f))
                 }
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Surface1)
-                        .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                        .background(scheme.surface)
+                        .border(0.5.dp, scheme.outline, RoundedCornerShape(12.dp))
                 ) {
                     InfoRow("Best streak", "$bestStreak days", divider = true)
                     InfoRow("This week", "${weekSessions.size} sessions · ${fmtTime(weekMinutes)}", divider = true)
@@ -178,23 +182,25 @@ fun ForestScreen(
 
 @Composable
 private fun StatCell(emoji: String, value: String, label: String, accent: Color, modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(Surface1)
-            .border(0.5.dp, BorderSubtle, RoundedCornerShape(10.dp))
+            .background(scheme.surface)
+            .border(0.5.dp, scheme.outline, RoundedCornerShape(10.dp))
             .padding(vertical = 11.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(emoji, fontSize = 18.sp)
         Spacer(Modifier.height(3.dp))
-        Text(value, fontFamily = ForestMono, fontSize = 16.sp, color = TextPrimary)
-        Text(label, fontFamily = ForestMono, fontSize = 9.sp, color = TextMuted)
+        Text(value, fontFamily = TaskTheme.fontFamily, fontSize = 16.sp, color = scheme.onSurface)
+        Text(label, fontFamily = TaskTheme.fontFamily, fontSize = 9.sp, color = TaskTheme.colors.subText)
     }
 }
 
 @Composable
 private fun InfoRow(label: String, value: String, divider: Boolean) {
+    val scheme = MaterialTheme.colorScheme
     Column {
         Row(
             modifier = Modifier
@@ -202,11 +208,11 @@ private fun InfoRow(label: String, value: String, divider: Boolean) {
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(label, fontFamily = ForestMono, fontSize = 11.sp, color = TextMuted)
-            Text(value, fontFamily = ForestMono, fontSize = 11.sp, color = TextPrimary)
+            Text(label, fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, color = TaskTheme.colors.subText)
+            Text(value, fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, color = scheme.onSurface)
         }
         if (divider) {
-            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(BorderSubtle))
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(scheme.outline))
         }
     }
 }

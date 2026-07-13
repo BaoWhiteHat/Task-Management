@@ -29,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.taskmanagement.presentation.achievements.AchievementsScreen
 import com.example.taskmanagement.presentation.analytics.AnalyticsScreen
+import com.example.taskmanagement.presentation.appearance.AppearanceScreen
 import com.example.taskmanagement.presentation.calendar.CalendarScreen
 import com.example.taskmanagement.presentation.focus.FocusScreen
 import com.example.taskmanagement.presentation.focus.ForestScreen
@@ -41,6 +42,10 @@ import com.example.taskmanagement.presentation.my_tasks.MyTasksScreen
 import com.example.taskmanagement.presentation.new_task.NewTaskScreen
 import com.example.taskmanagement.presentation.navigateToSingleTop
 import com.example.taskmanagement.presentation.tasks.isTaskOverdue
+import com.example.taskmanagement.presentation.ui.theme.AppThemeMode
+import com.example.taskmanagement.presentation.ui.theme.AppearanceFontStyle
+import com.example.taskmanagement.presentation.ui.theme.AppearanceState
+import com.example.taskmanagement.presentation.ui.theme.AppearanceTextSize
 
 sealed class Screen(
     val route: String,
@@ -59,6 +64,7 @@ sealed class Screen(
     object Notebook : Screen("notebook")
     object Shop : Screen("shop")
     object Hub : Screen("hub")
+    object Appearance : Screen("appearance")
 }
 
 @Composable
@@ -114,6 +120,10 @@ fun BottomNavigationBar(
 @Composable
 fun TaskNavigation(
     modifier: Modifier = Modifier,
+    appearanceState: AppearanceState = AppearanceState(),
+    onThemeModeChange: (AppThemeMode) -> Unit = {},
+    onTextSizeChange: (AppearanceTextSize) -> Unit = {},
+    onFontStyleChange: (AppearanceFontStyle) -> Unit = {},
     navController: NavHostController = rememberNavController()
 ) {
     NavHost(
@@ -208,12 +218,24 @@ fun TaskNavigation(
 
         composable(route = Screen.Hub.route) {
             HubScreen(
+                modifier = modifier,
                 onNavigateBack = { navController.popBackStack() },
                 onOpenNotebook = { navController.navigate(Screen.Notebook.route) },
                 onOpenAchievements = { navController.navigate(Screen.Achievements.route) },
                 onOpenShop = { navController.navigate(Screen.Shop.route) },
-                onStartFocus = { navController.navigateToSingleTop(Screen.MyTasks.route) }
+                onStartFocus = { navController.navigateToSingleTop(Screen.MyTasks.route) },
+                appearanceState = appearanceState,
+                onOpenAppearance = { navController.navigate(Screen.Appearance.route) }
+            )
+        }
 
+        composable(route = Screen.Appearance.route) {
+            AppearanceScreen(
+                state = appearanceState,
+                onThemeModeChange = onThemeModeChange,
+                onTextSizeChange = onTextSizeChange,
+                onFontStyleChange = onFontStyleChange,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

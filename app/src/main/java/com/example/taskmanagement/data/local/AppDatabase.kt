@@ -37,7 +37,7 @@ import com.example.taskmanagement.data.local.type_converters.DateTypeConverter
         ProfileBackground::class,
         QuestClaim::class
     ],
-    version = 21,
+    version = 22    ,
     exportSchema = false
 )
 @TypeConverters(DateTypeConverter::class)

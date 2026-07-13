@@ -135,7 +135,7 @@ fun TaskQuestCard(
                         letterSpacing = 0.sp
                     ),
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     color = if (completed) MaterialTheme.colorScheme.onSurface.copy(alpha = .62f)
                     else MaterialTheme.colorScheme.onSurface,

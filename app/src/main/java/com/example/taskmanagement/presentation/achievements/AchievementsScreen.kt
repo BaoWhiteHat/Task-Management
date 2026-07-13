@@ -1,5 +1,7 @@
 package com.example.taskmanagement.presentation.achievements
 
+import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,7 +46,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,7 +62,6 @@ import com.example.taskmanagement.presentation.focus.TextDim
 import com.example.taskmanagement.presentation.focus.TextMuted
 import com.example.taskmanagement.presentation.focus.TextPrimary
 
-private val Mono = FontFamily.Monospace
 
 private val RarityCommon    = Color(0xFF8FA77B)
 private val RarityRare      = Color(0xFF4FA3E0)
@@ -122,7 +122,7 @@ fun AchievementsScreen(
                 }
                 Text(
                     "ACHIEVEMENTS",
-                    fontFamily = Mono,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 13.sp,
                     color = GreenBright,
                     letterSpacing = 2.sp
@@ -215,8 +215,8 @@ private fun SummaryHeader(unlocked: Int, total: Int) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ) {
-            Text("UNLOCKED", fontFamily = Mono, fontSize = 11.sp, color = TextMuted, letterSpacing = 1.sp)
-            Text("$unlocked / $total", fontFamily = Mono, fontSize = 16.sp, color = GreenBright)
+            Text("UNLOCKED", fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, color = TextMuted, letterSpacing = 1.sp)
+            Text("$unlocked / $total", fontFamily = TaskTheme.fontFamily, fontSize = 16.sp, color = GreenBright)
         }
         Box(
             modifier = Modifier
@@ -266,7 +266,7 @@ private fun ToggleTab(label: String, selected: Boolean, modifier: Modifier, onCl
     ) {
         Text(
             label,
-            fontFamily = Mono,
+            fontFamily = TaskTheme.fontFamily,
             fontSize = 11.sp,
             color = if (selected) GreenBright else TextMuted,
             letterSpacing = 1.sp
@@ -290,7 +290,7 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
     ) {
         Text(
             label,
-            fontFamily = Mono,
+            fontFamily = TaskTheme.fontFamily,
             fontSize = 11.sp,
             color = if (selected) GreenBright else TextMuted
         )
@@ -351,7 +351,7 @@ private fun BadgeCell(
         }
         Text(
             achievement.title,
-            fontFamily = Mono,
+            fontFamily = TaskTheme.fontFamily,
             fontSize = 10.sp,
             color = if (unlocked) TextPrimary else TextMuted,
             maxLines = 2,
@@ -360,7 +360,7 @@ private fun BadgeCell(
         )
         Text(
             achievement.rarity.uppercase(),
-            fontFamily = Mono,
+            fontFamily = TaskTheme.fontFamily,
             fontSize = 8.sp,
             letterSpacing = 1.sp,
             color = if (unlocked) rc else TextDim
@@ -380,7 +380,7 @@ private fun FallbackBadge(rc: Color, unlocked: Boolean, letter: String, size: In
     ) {
         Text(
             letter,
-            fontFamily = Mono,
+            fontFamily = TaskTheme.fontFamily,
             color = if (unlocked) rc else TextDim,
             fontSize = (size / 3).sp
         )
@@ -466,12 +466,12 @@ private fun JourneyPath(metric: String, chain: List<Achievement>, currentValue: 
         ) {
             Text(
                 metricLabel(metric).uppercase(),
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 12.sp,
                 color = GreenBright,
                 letterSpacing = 1.sp
             )
-            Text("$unlockedInChain / ${chain.size}", fontFamily = Mono, fontSize = 11.sp, color = TextMuted)
+            Text("$unlockedInChain / ${chain.size}", fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, color = TextMuted)
         }
 
         chain.forEachIndexed { i, a ->
@@ -518,8 +518,8 @@ private fun JourneyStep(
                 contentAlignment = Alignment.Center
             ) {
                 when (state) {
-                    StepState.DONE -> Text("✓", fontFamily = Mono, color = nodeColor, fontSize = 16.sp)
-                    StepState.ACTIVE -> Text("◆", fontFamily = Mono, color = nodeColor, fontSize = 12.sp)
+                    StepState.DONE -> Text("✓", fontFamily = TaskTheme.fontFamily, color = nodeColor, fontSize = 16.sp)
+                    StepState.ACTIVE -> Text("◆", fontFamily = TaskTheme.fontFamily, color = nodeColor, fontSize = 12.sp)
                     StepState.LOCKED -> Icon(
                         Icons.Default.Lock,
                         contentDescription = null,
@@ -545,13 +545,13 @@ private fun JourneyStep(
         ) {
             Text(
                 achievement.title,
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 13.sp,
                 color = if (state == StepState.LOCKED) TextDim else TextPrimary
             )
             Text(
                 achievement.description,
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 10.sp,
                 color = TextMuted,
                 lineHeight = 13.sp
@@ -559,7 +559,7 @@ private fun JourneyStep(
             when (state) {
                 StepState.DONE -> {
                     Spacer(Modifier.height(2.dp))
-                    Text("✓ UNLOCKED", fontFamily = Mono, fontSize = 9.sp, color = rc, letterSpacing = 1.sp)
+                    Text("✓ UNLOCKED", fontFamily = TaskTheme.fontFamily, fontSize = 9.sp, color = rc, letterSpacing = 1.sp)
                 }
                 StepState.ACTIVE -> {
                     val cur = currentValue.coerceAtMost(achievement.threshold)
@@ -586,7 +586,7 @@ private fun JourneyStep(
                     Spacer(Modifier.height(3.dp))
                     Text(
                         "$cur / ${achievement.threshold}${metricUnit(achievement.metric)}",
-                        fontFamily = Mono,
+                        fontFamily = TaskTheme.fontFamily,
                         fontSize = 10.sp,
                         color = GreenBright
                     )
@@ -595,7 +595,7 @@ private fun JourneyStep(
                     Spacer(Modifier.height(2.dp))
                     Text(
                         "LOCKED",
-                        fontFamily = Mono,
+                        fontFamily = TaskTheme.fontFamily,
                         fontSize = 9.sp,
                         color = TextDim,
                         letterSpacing = 1.sp
@@ -629,21 +629,21 @@ private fun DetailDialog(a: Achievement, onDismiss: () -> Unit) {
             }
             Text(
                 a.title,
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 16.sp,
                 color = TextPrimary,
                 textAlign = TextAlign.Center
             )
             Text(
                 "${a.rarity.uppercase()} · ${a.category.uppercase()}",
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 10.sp,
                 color = rc,
                 letterSpacing = 1.sp
             )
             Text(
                 a.description,
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 12.sp,
                 color = TextMuted,
                 textAlign = TextAlign.Center,
@@ -651,7 +651,7 @@ private fun DetailDialog(a: Achievement, onDismiss: () -> Unit) {
             )
             Text(
                 if (a.isUnlocked && a.unlockedAt > 0L) "Unlocked ${formatDate(a.unlockedAt)}" else "Locked",
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 10.sp,
                 color = TextDim
             )
@@ -680,7 +680,7 @@ internal fun CelebrationDialog(items: List<Achievement>, onDismiss: () -> Unit) 
         ) {
             Text(
                 "ACHIEVEMENT UNLOCKED",
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 12.sp,
                 color = rc,
                 letterSpacing = 2.sp
@@ -688,21 +688,21 @@ internal fun CelebrationDialog(items: List<Achievement>, onDismiss: () -> Unit) 
             BadgeArt(a, rc, big = true)
             Text(
                 a.title,
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 18.sp,
                 color = TextPrimary,
                 textAlign = TextAlign.Center
             )
             Text(
                 a.rarity.uppercase(),
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 10.sp,
                 color = rc,
                 letterSpacing = 1.sp
             )
             Text(
                 a.description,
-                fontFamily = Mono,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 12.sp,
                 color = TextMuted,
                 textAlign = TextAlign.Center,
@@ -718,7 +718,7 @@ internal fun CelebrationDialog(items: List<Achievement>, onDismiss: () -> Unit) 
             ) {
                 Text(
                     if (isLast) "AWESOME" else "NEXT  (${safeIndex + 1}/${items.size})",
-                    fontFamily = Mono,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 12.sp,
                     color = TextPrimary
                 )

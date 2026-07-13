@@ -1,5 +1,7 @@
 package com.example.taskmanagement.presentation.rewards
 
+import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,7 +29,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,7 +49,6 @@ import com.example.taskmanagement.presentation.shop.shopBackgrounds
 import com.example.taskmanagement.presentation.shop.shopTomes
 import androidx.compose.foundation.shape.CircleShape
 
-private val Pixel = FontFamily.Monospace
 
 @Composable
 fun DailyLoginHost(viewModel: DailyLoginViewModel = viewModel()) {
@@ -128,14 +128,14 @@ fun DailyLoginDialog(
             ) {
                 Text(
                     "DAILY LOGIN",
-                    fontFamily = Pixel,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 15.sp,
                     color = GreenBright,
                     letterSpacing = 3.sp
                 )
                 Text(
                     text = "Day ${state.cycleDay} of 7  \u00B7  \uD83D\uDD25 ${state.streak}-day streak",
-                    fontFamily = Pixel,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 10.sp,
                     color = TextMuted
                 )
@@ -167,7 +167,7 @@ fun DailyLoginDialog(
                     ) {
                         Text(
                             text = "Claim Day ${state.cycleDay}",
-                            fontFamily = Pixel,
+                            fontFamily = TaskTheme.fontFamily,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = BgDeep,
@@ -186,10 +186,10 @@ fun DailyLoginDialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("\u2713", fontFamily = Pixel, fontSize = 13.sp, color = GreenBright)
+                        Text("\u2713", fontFamily = TaskTheme.fontFamily, fontSize = 13.sp, color = GreenBright)
                         Text(
                             text = "Reward claimed \u00B7 back tomorrow",
-                            fontFamily = Pixel,
+                            fontFamily = TaskTheme.fontFamily,
                             fontSize = 11.sp,
                             color = TextMuted
                         )
@@ -227,7 +227,7 @@ private fun RewardCell(day: Int, state: DailyLoginState, modifier: Modifier = Mo
     ) {
         Text(
             "DAY $day",
-            fontFamily = Pixel,
+            fontFamily = TaskTheme.fontFamily,
             fontSize = 8.sp,
             color = if (isToday) GreenBright else TextDim,
             letterSpacing = 1.sp
@@ -235,7 +235,7 @@ private fun RewardCell(day: Int, state: DailyLoginState, modifier: Modifier = Mo
         RewardIcon(reward = reward, size = 30.dp)
         Text(
             text = if (isClaimed) "\u2713" else rewardShort(reward),
-            fontFamily = Pixel,
+            fontFamily = TaskTheme.fontFamily,
             fontSize = 9.sp,
             color = if (isClaimed) GreenBright else TextMuted,
             maxLines = 1
@@ -269,7 +269,7 @@ private fun Day7Banner(state: DailyLoginState) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 "DAY 7 \u00B7 GRAND REWARD",
-                fontFamily = Pixel,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 9.sp,
                 color = AmberAccent,
                 letterSpacing = 1.5.sp
@@ -296,13 +296,13 @@ private fun Day7Banner(state: DailyLoginState) {
                         append(loot.name)
                     }
                 },
-                fontFamily = Pixel,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 11.sp,
                 color = TextPrimary,
                 maxLines = 1
             )
         }
-        if (isClaimed) Text("\u2713", fontFamily = Pixel, fontSize = 16.sp, color = GreenBright)
+        if (isClaimed) Text("\u2713", fontFamily = TaskTheme.fontFamily, fontSize = 16.sp, color = GreenBright)
     }
 }
 

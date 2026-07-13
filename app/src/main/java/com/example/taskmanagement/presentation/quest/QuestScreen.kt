@@ -1,5 +1,7 @@
 package com.example.taskmanagement.presentation.quest
 
+import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,7 +37,6 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,7 +57,6 @@ import com.example.taskmanagement.presentation.loot.LootRarity
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.systemBarsPadding
 
-private val Pixel = FontFamily.Monospace
 
 private fun rarityColor(r: LootRarity): Color = when (r) {
     LootRarity.COMMON -> Color(0xFF9AA4AE)
@@ -150,8 +150,8 @@ fun QuestBoardDialog(
 
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("QUESTS", fontFamily = Pixel, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimary, letterSpacing = 2.sp)
-                        Text("earn rewards by focusing", fontFamily = Pixel, fontSize = 10.sp, color = TextMuted)
+                        Text("QUESTS", fontFamily = TaskTheme.fontFamily, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimary, letterSpacing = 2.sp)
+                        Text("earn rewards by focusing", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = TextMuted)
                     }
 
                     Row(
@@ -164,7 +164,7 @@ fun QuestBoardDialog(
                     ) {
                         Text("\uD83E\uDE99", fontSize = 12.sp)
                         Spacer(Modifier.width(4.dp))
-                        Text("$coins", fontFamily = Pixel, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AmberAccent)
+                        Text("$coins", fontFamily = TaskTheme.fontFamily, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AmberAccent)
                     }
                 }
 
@@ -223,8 +223,8 @@ private fun TabButton(label: String, sub: String, selected: Boolean, modifier: M
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(label, fontFamily = Pixel, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (selected) BgDeep else TextPrimary, letterSpacing = 1.sp)
-        Text(sub, fontFamily = Pixel, fontSize = 10.sp, color = if (selected) BgDeep.copy(alpha = 0.7f) else TextMuted)
+        Text(label, fontFamily = TaskTheme.fontFamily, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (selected) BgDeep else TextPrimary, letterSpacing = 1.sp)
+        Text(sub, fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = if (selected) BgDeep.copy(alpha = 0.7f) else TextMuted)
     }
 }
 
@@ -239,9 +239,9 @@ private fun TrackRow(track: TrackState, resetText: String, onClaimBonus: () -> U
             .padding(14.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("REWARD TRACK \u00B7 ${track.done}/${track.total}", fontFamily = Pixel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextPrimary, letterSpacing = 1.sp)
+            Text("REWARD TRACK \u00B7 ${track.done}/${track.total}", fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextPrimary, letterSpacing = 1.sp)
             Spacer(Modifier.weight(1f))
-            Text("\u23F1 $resetText", fontFamily = Pixel, fontSize = 10.sp, color = AmberAccent)
+            Text("\u23F1 $resetText", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = AmberAccent)
         }
 
         Spacer(Modifier.height(12.dp))
@@ -257,7 +257,7 @@ private fun TrackRow(track: TrackState, resetText: String, onClaimBonus: () -> U
                         .border(0.5.dp, if (done) GreenBright else BorderSubtle, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(if (done) "\u2713" else "${i + 1}", fontFamily = Pixel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (done) BgDeep else TextDim)
+                    Text(if (done) "\u2713" else "${i + 1}", fontFamily = TaskTheme.fontFamily, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (done) BgDeep else TextDim)
                 }
                 Box(
                     modifier = Modifier
@@ -297,7 +297,7 @@ private fun TrackRow(track: TrackState, resetText: String, onClaimBonus: () -> U
             ) {
                 Text(
                     "Claim bonus  +${track.bonus.coins} \uD83E\uDE99 + ${track.bonus.rewardRarity.label}",
-                    fontFamily = Pixel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BgDeep
+                    fontFamily = TaskTheme.fontFamily, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BgDeep
                 )
             }
         }
@@ -346,12 +346,12 @@ private fun QuestCard(ui: QuestUi, onClaim: () -> Unit, onFocus: () -> Unit) {
 
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(q.title, fontFamily = Pixel, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                Text(if (q.period == QuestPeriod.DAILY) "today" else "this week", fontFamily = Pixel, fontSize = 10.sp, color = TextMuted)
+                Text(q.title, fontFamily = TaskTheme.fontFamily, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text(if (q.period == QuestPeriod.DAILY) "today" else "this week", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = TextMuted)
             }
             Text(
                 "${ui.progress.coerceAtMost(q.target)} / ${q.target}",
-                fontFamily = Pixel, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                fontFamily = TaskTheme.fontFamily, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                 color = if (ui.progress >= q.target) GreenBright else TextMuted
             )
         }
@@ -400,7 +400,7 @@ private fun RewardChip(text: String, leading: String, color: Color) {
     ) {
         Text(leading, fontSize = 11.sp)
         Spacer(Modifier.width(4.dp))
-        Text(text, fontFamily = Pixel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = color)
+        Text(text, fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
@@ -408,8 +408,8 @@ private fun RewardChip(text: String, leading: String, color: Color) {
 private fun QuestAction(ui: QuestUi, onClaim: () -> Unit, onFocus: () -> Unit) {
     when {
         ui.claimed -> Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("\u2713 ", fontFamily = Pixel, color = GreenBright, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            Text("Claimed", fontFamily = Pixel, fontSize = 12.sp, color = TextMuted)
+            Text("\u2713 ", fontFamily = TaskTheme.fontFamily, color = GreenBright, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text("Claimed", fontFamily = TaskTheme.fontFamily, fontSize = 12.sp, color = TextMuted)
         }
         ui.claimable -> Box(
             modifier = Modifier
@@ -418,7 +418,7 @@ private fun QuestAction(ui: QuestUi, onClaim: () -> Unit, onFocus: () -> Unit) {
                 .clickable { onClaim() }
                 .padding(horizontal = 22.dp, vertical = 9.dp),
             contentAlignment = Alignment.Center
-        ) { Text("Claim", fontFamily = Pixel, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BgDeep) }
+        ) { Text("Claim", fontFamily = TaskTheme.fontFamily, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BgDeep) }
         else -> Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
@@ -426,7 +426,7 @@ private fun QuestAction(ui: QuestUi, onClaim: () -> Unit, onFocus: () -> Unit) {
                 .clickable { onFocus() }
                 .padding(horizontal = 16.dp, vertical = 9.dp),
             contentAlignment = Alignment.Center
-        ) { Text("Focus \u203A", fontFamily = Pixel, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = GreenBright) }
+        ) { Text("Focus \u203A", fontFamily = TaskTheme.fontFamily, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = GreenBright) }
     }
 }
 
@@ -449,14 +449,14 @@ private fun RewardClaimedDialog(reward: ClaimedReward, onDismiss: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text("QUEST COMPLETE", fontFamily = Pixel, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = GreenBright, letterSpacing = 3.sp)
-            Text("Rewards collected", fontFamily = Pixel, fontSize = 10.sp, color = TextMuted)
+            Text("QUEST COMPLETE", fontFamily = TaskTheme.fontFamily, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = GreenBright, letterSpacing = 3.sp)
+            Text("Rewards collected", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = TextMuted)
 
             if (reward.coins > 0) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("\uD83E\uDE99", fontSize = 18.sp)
                     Spacer(Modifier.width(8.dp))
-                    Text("+${reward.coins} coins", fontFamily = Pixel, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AmberAccent)
+                    Text("+${reward.coins} coins", fontFamily = TaskTheme.fontFamily, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AmberAccent)
                 }
             }
 
@@ -490,8 +490,8 @@ private fun RewardClaimedDialog(reward: ClaimedReward, onDismiss: () -> Unit) {
                             Text("\uD83C\uDF92", fontSize = 32.sp)
                         }
                     }
-                    Text(item.name, fontFamily = Pixel, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Text(item.rarity.label, fontFamily = Pixel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = rc)
+                    Text(item.name, fontFamily = TaskTheme.fontFamily, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text(item.rarity.label, fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = rc)
                 }
             }
 
@@ -503,7 +503,7 @@ private fun RewardClaimedDialog(reward: ClaimedReward, onDismiss: () -> Unit) {
                     .clickable { onDismiss() }
                     .padding(vertical = 13.dp),
                 contentAlignment = Alignment.Center
-            ) { Text("Collect", fontFamily = Pixel, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = BgDeep, letterSpacing = 1.sp) }
+            ) { Text("Collect", fontFamily = TaskTheme.fontFamily, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = BgDeep, letterSpacing = 1.sp) }
         }
     }
 }

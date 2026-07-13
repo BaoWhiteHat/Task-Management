@@ -1,5 +1,7 @@
 package com.example.taskmanagement.presentation.focus
 
+import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -17,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,10 +33,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -44,7 +47,6 @@ import kotlin.math.roundToInt
 import com.example.taskmanagement.presentation.shop.shopTomes
 import com.example.taskmanagement.presentation.shop.GuardianItemIds
 
-private val Pixel = FontFamily.Monospace
 
 private val campTips = listOf(
     "Tip: Higher-priority tasks spawn tougher foes — but reward double.",
@@ -79,9 +81,26 @@ fun FocusBattleScreen(
         else context.resources.getIdentifier(selectedBg, "drawable", context.packageName)
     }
     val onBackground = bgResId != 0
-    val palette = if (onBackground) LightPalette else DarkPalette
+    val scheme = MaterialTheme.colorScheme
+    val palette = when {
+        onBackground -> LightPalette
+        scheme.background.luminance() > 0.5f -> LightPalette.copy(
+            panel = scheme.surface,
+            border = scheme.outline,
+            green = scheme.primary,
+            amber = TaskTheme.colors.accentColor,
+            pill = scheme.surfaceVariant
+        )
+        else -> DarkPalette.copy(
+            panel = scheme.surface,
+            border = scheme.outline,
+            green = scheme.primary,
+            amber = TaskTheme.colors.accentColor,
+            pill = scheme.surfaceVariant
+        )
+    }
 
-    Box(modifier = Modifier.fillMaxSize().background(BgDeep)) {
+    Box(modifier = Modifier.fillMaxSize().background(scheme.background)) {
 
         // Only draws when a background image is actually present; otherwise nothing (pure dark theme).
         FocusBackgroundLayer(resId = bgResId)
@@ -131,7 +150,6 @@ fun FocusBattleScreen(
             }
         }
 
-        // Modal sits on its own dark overlay, so it always uses the original dark style.
         if (state.showRetreatDialog) {
             RetreatDialog(
                 earlyRetreat = state.isEarlyRetreat,
@@ -187,7 +205,7 @@ private fun BattleTopBar(palette: BattlePalette) {
         ) {
             Text(
                 text = "FOCUS QUEST",
-                fontFamily = Pixel,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 13.sp,
                 color = palette.green,
                 letterSpacing = 2.sp
@@ -229,8 +247,8 @@ private fun HeroHud(profile: com.example.taskmanagement.data.local.models.GamePr
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Lv $level · $title", fontFamily = Pixel, fontSize = 11.sp, color = palette.textPrimary)
-                Text(xpText, fontFamily = Pixel, fontSize = 10.sp, color = palette.textMuted)
+                Text("Lv $level · $title", fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, color = palette.textPrimary)
+                Text(xpText, fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = palette.textMuted)
             }
             Spacer(Modifier.height(4.dp))
             StatBar(progress = xpProgress, fill = palette.green, track = Surface2)
@@ -239,7 +257,7 @@ private fun HeroHud(profile: com.example.taskmanagement.data.local.models.GamePr
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("\uD83E\uDE99", fontSize = 13.sp)
             Spacer(Modifier.width(3.dp))
-            Text("$coins", fontFamily = Pixel, fontSize = 11.sp, color = palette.amber)
+            Text("$coins", fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, color = palette.amber)
         }
     }
 }
@@ -278,7 +296,7 @@ private fun EnemyPanel(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = encounter.title,
-                        fontFamily = Pixel,
+                        fontFamily = TaskTheme.fontFamily,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = palette.textPrimary,
@@ -286,7 +304,7 @@ private fun EnemyPanel(
                     )
                     Text(
                         text = encounter.enemyName.lowercase(),
-                        fontFamily = Pixel,
+                        fontFamily = TaskTheme.fontFamily,
                         fontSize = 10.sp,
                         color = if (palette.isLight) palette.textMuted else encounter.type.accent,
                         letterSpacing = 1.sp
@@ -299,7 +317,7 @@ private fun EnemyPanel(
                             .background(Color(0x33E5484D))
                             .border(0.5.dp, HpRed, RoundedCornerShape(6.dp))
                             .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) { Text("BOSS", fontFamily = Pixel, fontSize = 10.sp, color = HpRed, letterSpacing = 1.sp) }
+                    ) { Text("BOSS", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = HpRed, letterSpacing = 1.sp) }
                 }
             }
 
@@ -308,8 +326,8 @@ private fun EnemyPanel(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("ENEMY HP", fontFamily = Pixel, fontSize = 9.sp, color = palette.textMuted, letterSpacing = 1.5.sp)
-                Text("$hpPercent%", fontFamily = Pixel, fontSize = 9.sp, color = palette.hp)
+                Text("ENEMY HP", fontFamily = TaskTheme.fontFamily, fontSize = 9.sp, color = palette.textMuted, letterSpacing = 1.5.sp)
+                Text("$hpPercent%", fontFamily = TaskTheme.fontFamily, fontSize = 9.sp, color = palette.hp)
             }
             StatBar(progress = enemyHp, fill = palette.hp, track = HpTrack, height = 8.dp)
 
@@ -336,7 +354,7 @@ private fun EnemyPanel(
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = timeText,
-                    fontFamily = Pixel,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 46.sp,
                     fontWeight = FontWeight.Medium,
                     color = palette.textPrimary,
@@ -349,7 +367,7 @@ private fun EnemyPanel(
                 }
                 Text(
                     text = "\u2014 $status \u2014",
-                    fontFamily = Pixel,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 10.sp,
                     color = if (isRunning) palette.green else palette.textMuted,
                     letterSpacing = 2.sp
@@ -364,11 +382,11 @@ private fun EnemyPanel(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("victory reward:", fontFamily = Pixel, fontSize = 10.sp, color = palette.textDim)
+                Text("victory reward:", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = palette.textDim)
                 Spacer(Modifier.width(8.dp))
-                Text("\u26A1 $rewardXp xp", fontFamily = Pixel, fontSize = 10.sp, color = palette.green)
+                Text("\u26A1 $rewardXp xp", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = palette.green)
                 Spacer(Modifier.width(10.dp))
-                Text("\uD83E\uDE99 $rewardCoin", fontFamily = Pixel, fontSize = 10.sp, color = palette.amber)
+                Text("\uD83E\uDE99 $rewardCoin", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = palette.amber)
             }
         }
     }
@@ -402,7 +420,7 @@ private fun CampPanel(state: FocusUiState, timeText: String, palette: BattlePale
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("RESTING AT CAMP", fontFamily = Pixel, fontSize = 12.sp, color = palette.amber, letterSpacing = 2.sp)
+            Text("RESTING AT CAMP", fontFamily = TaskTheme.fontFamily, fontSize = 12.sp, color = palette.amber, letterSpacing = 2.sp)
 
             Box(
                 modifier = Modifier.fillMaxWidth().height(190.dp),
@@ -423,11 +441,11 @@ private fun CampPanel(state: FocusUiState, timeText: String, palette: BattlePale
                 )
             }
 
-            Text("\u2014 your tree is growing \u2014", fontFamily = Pixel, fontSize = 10.sp, color = palette.textMuted, letterSpacing = 2.sp)
+            Text("\u2014 your tree is growing \u2014", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = palette.textMuted, letterSpacing = 2.sp)
 
             Text(
                 text = tip,
-                fontFamily = Pixel,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 10.sp,
                 color = palette.textMuted,
                 letterSpacing = 0.5.sp,
@@ -437,7 +455,7 @@ private fun CampPanel(state: FocusUiState, timeText: String, palette: BattlePale
 
             Text(
                 text = timeText,
-                fontFamily = Pixel,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Medium,
                 color = palette.textPrimary,
@@ -461,7 +479,7 @@ private fun SpriteSlot(sprite: String, label: String, accent: Color, labelColor:
             contentAlignment = Alignment.Center
         ) { Text(sprite, fontSize = (size.value * 0.55f).sp) }
         Spacer(Modifier.height(5.dp))
-        Text(label, fontFamily = Pixel, fontSize = 9.sp, color = labelColor, letterSpacing = 1.sp)
+        Text(label, fontFamily = TaskTheme.fontFamily, fontSize = 9.sp, color = labelColor, letterSpacing = 1.sp)
     }
 }
 
@@ -512,7 +530,7 @@ private fun AmbientPill(soundId: String, palette: BattlePalette) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(sound?.icon ?: "\uD83C\uDFB5", fontSize = 14.sp)
-        Text("$soundId · playing", fontFamily = Pixel, fontSize = 11.sp, color = palette.textMuted)
+        Text("$soundId · playing", fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, color = palette.textMuted)
     }
 }
 
@@ -547,7 +565,7 @@ private fun BattleControls(
         ) {
             Text(
                 text = primaryLabel,
-                fontFamily = Pixel,
+                fontFamily = TaskTheme.fontFamily,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = if (isRunning) AmberAccent else BgDeep,
@@ -574,7 +592,7 @@ private fun GhostButton(text: String, onClick: () -> Unit, palette: BattlePalett
             .clickable(onClick = onClick)
             .padding(vertical = 13.dp),
         contentAlignment = Alignment.Center
-    ) { Text(text, fontFamily = Pixel, fontSize = 12.sp, color = palette.textMuted) }
+    ) { Text(text, fontFamily = TaskTheme.fontFamily, fontSize = 12.sp, color = palette.textMuted) }
 }
 
 @Composable
@@ -586,6 +604,8 @@ private fun RetreatDialog(
     onDismiss: () -> Unit
 ) {
     val hasPotion = focusPotionCount > 0
+    val scheme = MaterialTheme.colorScheme
+    val colors = TaskTheme.colors
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -597,8 +617,8 @@ private fun RetreatDialog(
             modifier = Modifier
                 .padding(28.dp)
                 .clip(RoundedCornerShape(18.dp))
-                .background(Surface1)
-                .border(0.5.dp, HpRed, RoundedCornerShape(18.dp))
+                .background(scheme.surface)
+                .border(0.5.dp, colors.priorityHigh, RoundedCornerShape(18.dp))
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
@@ -609,7 +629,7 @@ private fun RetreatDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Text("Flee the battle?", fontFamily = Pixel, fontSize = 16.sp, color = TextPrimary)
+                Text("Flee the battle?", fontFamily = TaskTheme.fontFamily, fontSize = 16.sp, color = scheme.onSurface)
                 Text(
                     when {
                         earlyRetreat && hasPotion ->
@@ -618,20 +638,20 @@ private fun RetreatDialog(
                             "You are leaving before the safe threshold. Retreating now costs 15 XP, 5 coins, and resets your streak."
                         else -> "You reached the safe threshold. No XP or coins will be lost."
                     },
-                    fontFamily = Pixel,
+                    fontFamily = TaskTheme.fontFamily,
                     fontSize = 11.sp,
-                    color = TextMuted
+                    color = colors.subText
                 )
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    RetreatActionButton("Stay focused", Surface2, GreenBright, onDismiss)
+                    RetreatActionButton("Stay focused", scheme.surfaceVariant, scheme.primary, onDismiss)
                     if (earlyRetreat && hasPotion) {
                         RetreatActionButton(
                             "Use Potion & Retreat",
-                            GreenDark,
-                            Color.White,
+                            scheme.primary,
+                            scheme.onPrimary,
                             onUsePotion
                         )
                     }
@@ -641,8 +661,8 @@ private fun RetreatDialog(
                             earlyRetreat -> "Retreat anyway"
                             else -> "Retreat"
                         },
-                        background = if (earlyRetreat) HpRed else Surface2,
-                        textColor = if (earlyRetreat) Color.White else TextPrimary,
+                        background = if (earlyRetreat) colors.priorityHigh else scheme.surfaceVariant,
+                        textColor = if (earlyRetreat) Color.White else scheme.onSurface,
                         onClick = onRetreat
                     )
                 }
@@ -658,17 +678,18 @@ private fun RetreatActionButton(
     textColor: Color,
     onClick: () -> Unit
 ) {
+    val borderColor = MaterialTheme.colorScheme.outline
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(background)
-            .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp))
+            .border(0.5.dp, borderColor, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 12.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(text, fontFamily = Pixel, fontSize = 11.sp, color = textColor)
+        Text(text, fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, color = textColor)
     }
 }
 

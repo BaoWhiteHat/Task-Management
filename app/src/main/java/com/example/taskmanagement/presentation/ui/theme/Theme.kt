@@ -9,6 +9,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 
 private val RpgBgDeep       = Color(0xFF081105)
 private val RpgSurface1      = Color(0xFF101C0C)
@@ -221,21 +222,122 @@ val LightExtendedColors = TaskExtendedColors(
 )
 
 val LocalExtendedColors = staticCompositionLocalOf { RpgExtendedColors }
+val LocalAppFontFamily = staticCompositionLocalOf<FontFamily> { Pixel }
+val LocalAppearanceControlColors = staticCompositionLocalOf { DarkAppearanceControlColors }
+
+@Immutable
+data class AppearanceControlColors(
+    val selectedContainer: Color,
+    val selectedContent: Color,
+    val selectedBorder: Color,
+    val unselectedContainer: Color,
+    val unselectedContent: Color,
+    val controlContainer: Color,
+    val controlOutline: Color,
+    val sectionLabel: Color,
+)
+
+val LightAppearanceControlColors = AppearanceControlColors(
+    selectedContainer = Color(0xFFE4F7C4),
+    selectedContent = Color(0xFF234B18),
+    selectedBorder = Color(0xFF9DDE36),
+    unselectedContainer = Color.Transparent,
+    unselectedContent = Color(0xFF477565),
+    controlContainer = Color(0xFFEDF5F1),
+    controlOutline = LightOutline,
+    sectionLabel = LightOnSurfaceVar,
+)
+
+val DarkAppearanceControlColors = AppearanceControlColors(
+    selectedContainer = Color(0xFF29481E),
+    selectedContent = Color(0xFFDDFC9C),
+    selectedBorder = BrandGreen,
+    unselectedContainer = Color.Transparent,
+    unselectedContent = Color(0xFFA5B9AC),
+    controlContainer = Color(0xFF17221A),
+    controlOutline = RpgBorderSubtle,
+    sectionLabel = RpgTextMuted,
+)
+
+data class AppearanceState(
+    val themeMode: AppThemeMode = AppThemeMode.DARK,
+    val textSize: AppearanceTextSize = AppearanceTextSize.DEFAULT,
+    val fontStyle: AppearanceFontStyle = AppearanceFontStyle.PIXEL
+)
+
+enum class AppThemeMode(
+    val storedValue: String,
+    val label: String
+) {
+    LIGHT("light", "Light"),
+    DARK("dark", "Dark");
+
+    fun resolveDarkTheme(): Boolean =
+        when (this) {
+            LIGHT -> false
+            DARK -> true
+        }
+
+    companion object {
+        fun fromStoredValue(value: String?): AppThemeMode =
+            entries.firstOrNull { it.storedValue == value } ?: DARK
+    }
+}
+
+enum class AppearanceTextSize(
+    val storedValue: String,
+    val label: String,
+    val summaryLabel: String,
+    val scale: Float
+) {
+    SMALL("small", "Small", "Small text", 0.90f),
+    DEFAULT("default", "Default", "Default text", 1.00f),
+    LARGE("large", "Large", "Large text", 1.15f);
+
+    companion object {
+        fun fromStoredValue(value: String?): AppearanceTextSize =
+            entries.firstOrNull { it.storedValue == value } ?: DEFAULT
+    }
+}
+
+enum class AppearanceFontStyle(
+    val storedValue: String,
+    val label: String
+) {
+    PIXEL("pixel", "Pixel"),
+    CLEAN("clean", "Clean"),
+    ROUNDED("rounded", "Rounded");
+
+    companion object {
+        fun fromStoredValue(value: String?): AppearanceFontStyle =
+            entries.firstOrNull { it.storedValue == value } ?: PIXEL
+    }
+}
+
+fun AppearanceState.summary(): String =
+    "${themeMode.label} \u00B7 ${textSize.summaryLabel} \u00B7 ${fontStyle.label}"
 
 @Composable
 fun TaskManagementTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    textSize: AppearanceTextSize = AppearanceTextSize.DEFAULT,
+    fontStyle: AppearanceFontStyle = AppearanceFontStyle.PIXEL,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) RpgScheme else AuroraLightScheme
     val extendedColors = if (darkTheme) RpgExtendedColors else LightExtendedColors
+    val appearanceControlColors =
+        if (darkTheme) DarkAppearanceControlColors else LightAppearanceControlColors
+    val fontFamily = appFontFamily(fontStyle)
 
     androidx.compose.runtime.CompositionLocalProvider(
-        LocalExtendedColors provides extendedColors
+        LocalExtendedColors provides extendedColors,
+        LocalAppearanceControlColors provides appearanceControlColors,
+        LocalAppFontFamily provides fontFamily
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = Typography,
+            typography = appTypography(textSize, fontStyle),
             content = content
         )
     }
@@ -246,4 +348,14 @@ object TaskTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalExtendedColors.current
+
+    val fontFamily: FontFamily
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppFontFamily.current
+
+    val appearanceControls: AppearanceControlColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppearanceControlColors.current
 }

@@ -25,6 +25,10 @@ import com.example.taskmanagement.presentation.navigation.BottomNavigationBar
 import com.example.taskmanagement.presentation.navigation.Screen
 import com.example.taskmanagement.presentation.navigation.TaskNavigation
 import com.example.taskmanagement.presentation.onboarding.LegendIntroDialog
+import com.example.taskmanagement.presentation.ui.theme.AppThemeMode
+import com.example.taskmanagement.presentation.ui.theme.AppearanceFontStyle
+import com.example.taskmanagement.presentation.ui.theme.AppearanceState
+import com.example.taskmanagement.presentation.ui.theme.AppearanceTextSize
 
 private const val INTRO_PREFERENCES = "legend_onboarding"
 private const val HAS_SEEN_LEGEND_INTRO = "has_seen_legend_intro"
@@ -33,7 +37,13 @@ private const val INTRO_LORE = "lore"
 private const val INTRO_COMPLETE = "complete"
 
 @Composable
-fun TaskApp(modifier: Modifier = Modifier) {
+fun TaskApp(
+    modifier: Modifier = Modifier,
+    appearanceState: AppearanceState = AppearanceState(),
+    onThemeModeChange: (AppThemeMode) -> Unit = {},
+    onTextSizeChange: (AppearanceTextSize) -> Unit = {},
+    onFontStyleChange: (AppearanceFontStyle) -> Unit = {}
+) {
     val context = LocalContext.current
     val preferences = remember(context) {
         context.getSharedPreferences(INTRO_PREFERENCES, Context.MODE_PRIVATE)
@@ -72,6 +82,7 @@ fun TaskApp(modifier: Modifier = Modifier) {
             && currentRoute != Screen.Achievements.route
             && currentRoute != Screen.Notebook.route
             && currentRoute != Screen.Shop.route
+            && currentRoute != Screen.Appearance.route
 
     Box(modifier = modifier.fillMaxSize()) {
         Scaffold(
@@ -97,6 +108,10 @@ fun TaskApp(modifier: Modifier = Modifier) {
         ) { paddingValues ->
             TaskNavigation(
                 navController = navController,
+                appearanceState = appearanceState,
+                onThemeModeChange = onThemeModeChange,
+                onTextSizeChange = onTextSizeChange,
+                onFontStyleChange = onFontStyleChange,
                 modifier = Modifier.padding(paddingValues)
             )
         }

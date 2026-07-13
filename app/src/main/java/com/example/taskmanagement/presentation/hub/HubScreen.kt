@@ -20,6 +20,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,38 +43,33 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taskmanagement.R
 import com.example.taskmanagement.presentation.achievements.AchievementsViewModel
-import com.example.taskmanagement.presentation.focus.AmberAccent
-import com.example.taskmanagement.presentation.focus.BgDeep
-import com.example.taskmanagement.presentation.focus.BorderSubtle
 import com.example.taskmanagement.presentation.focus.ForestViewModel
-import com.example.taskmanagement.presentation.focus.GreenBright
-import com.example.taskmanagement.presentation.focus.GreenDark
-import com.example.taskmanagement.presentation.focus.Surface1
-import com.example.taskmanagement.presentation.focus.Surface2
-import com.example.taskmanagement.presentation.focus.TextDim
 import com.example.taskmanagement.presentation.focus.TextMuted
 import com.example.taskmanagement.presentation.focus.TextPrimary
 import com.example.taskmanagement.presentation.loot.LootCollectionDialog
 import com.example.taskmanagement.presentation.loot.LootViewModel
 import com.example.taskmanagement.presentation.quest.QuestBoardDialog
 import com.example.taskmanagement.presentation.quest.QuestViewModel
-
-private val Pixel = FontFamily.Monospace
+import com.example.taskmanagement.presentation.ui.theme.AppearanceState
+import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+import com.example.taskmanagement.presentation.ui.theme.summary
 
 @Composable
 fun HubScreen(
+    modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
     onOpenNotebook: () -> Unit = {},
     onOpenAchievements: () -> Unit = {},
     onOpenShop: () -> Unit = {},
     onStartFocus: () -> Unit = {},
+    appearanceState: AppearanceState = AppearanceState(),
+    onOpenAppearance: () -> Unit = {},
     viewModel: ForestViewModel = viewModel(),
     lootViewModel: LootViewModel = viewModel(),
     questViewModel: QuestViewModel = viewModel(),
@@ -98,7 +97,11 @@ fun HubScreen(
     val xpNext = profile?.xpForNextLevel ?: 100
     val achSubtitle = if (achState.totalCount > 0) "${achState.unlockedCount} / ${achState.totalCount} unlocked" else "Badges you've earned"
 
-    Box(modifier = Modifier.fillMaxSize().background(BgDeep)) {
+    val scheme = MaterialTheme.colorScheme
+    val taskColors = TaskTheme.colors
+    val appFont = TaskTheme.fontFamily
+
+    Box(modifier = modifier.fillMaxSize().background(scheme.background)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -116,24 +119,24 @@ fun HubScreen(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Surface1)
-                        .border(0.5.dp, GreenDark, CircleShape)
+                        .background(scheme.surface)
+                        .border(0.5.dp, scheme.outline, CircleShape)
                         .clickable { onNavigateBack() },
                     contentAlignment = Alignment.Center
-                ) { Text("\u2190", fontSize = 17.sp, color = TextPrimary) }
+                ) { Text("\u2190", fontSize = 17.sp, color = scheme.onSurface) }
 
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("CAMP", fontFamily = Pixel, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimary, letterSpacing = 3.sp)
-                    Text("your hero & quests", fontFamily = Pixel, fontSize = 10.sp, color = TextMuted)
+                    Text("CAMP", fontFamily = appFont, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = scheme.onBackground, letterSpacing = 3.sp)
+                    Text("your hero & quests", fontFamily = appFont, fontSize = 10.sp, color = taskColors.subText)
                 }
 
                 Box(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Surface1)
-                        .border(0.5.dp, GreenDark, CircleShape)
+                        .background(scheme.surface)
+                        .border(0.5.dp, scheme.outline, CircleShape)
                         .clickable { onOpenNotebook() },
                     contentAlignment = Alignment.Center
                 ) { Text("\uD83D\uDCD6", fontSize = 16.sp) }
@@ -143,17 +146,17 @@ fun HubScreen(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(AmberAccent.copy(alpha = 0.15f))
-                        .border(0.5.dp, AmberAccent.copy(alpha = 0.6f), RoundedCornerShape(50))
+                        .background(taskColors.accentColor.copy(alpha = 0.15f))
+                        .border(0.5.dp, taskColors.accentColor.copy(alpha = 0.6f), RoundedCornerShape(50))
                         .clickable { onOpenShop() }
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("\uD83E\uDE99", fontSize = 12.sp)
                     Spacer(Modifier.width(4.dp))
-                    Text("$coins", fontFamily = Pixel, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AmberAccent)
+                    Text("$coins", fontFamily = appFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = taskColors.accentColor)
                     Spacer(Modifier.width(5.dp))
-                    Text("\u203A", fontFamily = Pixel, fontSize = 14.sp, color = AmberAccent.copy(alpha = 0.7f))
+                    Text("\u203A", fontFamily = appFont, fontSize = 14.sp, color = taskColors.accentColor.copy(alpha = 0.7f))
                 }
             }
 
@@ -163,7 +166,7 @@ fun HubScreen(
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 148.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 Spacer(Modifier.height(2.dp))
@@ -222,6 +225,18 @@ fun HubScreen(
                         )
                     }
                 }
+
+                // APPEARANCE
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SectionLabel("APPEARANCE")
+                    Spacer(Modifier.height(4.dp))
+                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        AppearanceSettingsRow(
+                            subtitle = appearanceState.summary(),
+                            onClick = onOpenAppearance
+                        )
+                    }
+                }
             }
         }
     }
@@ -239,6 +254,45 @@ fun HubScreen(
 }
 
 @Composable
+private fun AppearanceSettingsRow(
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(0.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                "Appearance",
+                fontFamily = TaskTheme.fontFamily,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                subtitle,
+                fontFamily = TaskTheme.fontFamily,
+                fontSize = 10.sp,
+                color = TaskTheme.colors.subText
+            )
+        }
+        Icon(
+            Icons.Default.KeyboardArrowRight,
+            contentDescription = null,
+            tint = TaskTheme.colors.subText
+        )
+    }
+}
+
+@Composable
 private fun HeroBanner(
     level: Int,
     title: String,
@@ -246,13 +300,15 @@ private fun HeroBanner(
     xp: Int,
     xpNext: Int
 ) {
+    val scheme = MaterialTheme.colorScheme
+    val appFont = TaskTheme.fontFamily
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .height(236.dp)
             .clip(RoundedCornerShape(20.dp))
-            .border(0.5.dp, BorderSubtle, RoundedCornerShape(20.dp))
+            .border(0.5.dp, scheme.outline, RoundedCornerShape(20.dp))
     ) {
         Image(
             painter = painterResource(R.drawable.focus_bg_night),
@@ -300,15 +356,15 @@ private fun HeroBanner(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(GreenBright),
+                            .background(scheme.primary),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("$level", fontFamily = Pixel, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = BgDeep)
+                        Text("$level", fontFamily = appFont, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = scheme.onPrimary)
                     }
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(title, fontFamily = Pixel, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        Text("Level $level", fontFamily = Pixel, fontSize = 11.sp, color = TextMuted)
+                        Text(title, fontFamily = appFont, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text("Level $level", fontFamily = appFont, fontSize = 11.sp, color = TextMuted)
                     }
                 }
 
@@ -326,11 +382,11 @@ private fun HeroBanner(
                             .fillMaxWidth(xpProgress)
                             .height(8.dp)
                             .clip(RoundedCornerShape(50))
-                            .background(GreenBright)
+                            .background(scheme.primary)
                     )
                 }
                 Spacer(Modifier.height(5.dp))
-                Text("$xp / $xpNext XP", fontFamily = Pixel, fontSize = 10.sp, color = TextMuted)
+                Text("$xp / $xpNext XP", fontFamily = appFont, fontSize = 10.sp, color = TextMuted)
             }
         }
     }
@@ -351,8 +407,8 @@ private fun heroTreeRes(level: Int): Int = when (level.coerceIn(1, 8)) {
 private fun SectionLabel(text: String) {
     Text(
         text,
-        fontFamily = Pixel, fontSize = 11.sp, fontWeight = FontWeight.Bold,
-        color = TextDim, letterSpacing = 2.sp,
+        fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+        color = TaskTheme.colors.subText, letterSpacing = 2.sp,
         modifier = Modifier.padding(horizontal = 18.dp, vertical = 4.dp)
     )
 }
@@ -365,12 +421,15 @@ private fun HubCard(
     badge: Boolean = false,
     onClick: () -> Unit
 ) {
+    val scheme = MaterialTheme.colorScheme
+    val taskColors = TaskTheme.colors
+    val appFont = TaskTheme.fontFamily
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Surface1)
-            .border(0.5.dp, BorderSubtle, RoundedCornerShape(16.dp))
+            .background(scheme.surface)
+            .border(0.5.dp, scheme.outline, RoundedCornerShape(16.dp))
             .clickable { onClick() }
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -380,8 +439,8 @@ private fun HubCard(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Surface2)
-                    .border(0.5.dp, BorderSubtle, RoundedCornerShape(12.dp)),
+                    .background(scheme.surfaceVariant)
+                    .border(0.5.dp, scheme.outline, RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) { Text(icon, fontSize = 20.sp) }
             if (badge) {
@@ -390,17 +449,17 @@ private fun HubCard(
                         .align(Alignment.TopEnd)
                         .size(11.dp)
                         .clip(CircleShape)
-                        .background(GreenBright)
-                        .border(1.5.dp, Surface1, CircleShape)
+                        .background(scheme.primary)
+                        .border(1.5.dp, scheme.surface, CircleShape)
                 )
             }
         }
 
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontFamily = Pixel, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-            Text(subtitle, fontFamily = Pixel, fontSize = 10.sp, color = TextMuted)
+            Text(title, fontFamily = appFont, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = scheme.onSurface)
+            Text(subtitle, fontFamily = appFont, fontSize = 10.sp, color = taskColors.subText)
         }
-        Text("\u203A", fontFamily = Pixel, fontSize = 20.sp, color = GreenDark)
+        Text("\u203A", fontFamily = appFont, fontSize = 20.sp, color = scheme.primary)
     }
 }

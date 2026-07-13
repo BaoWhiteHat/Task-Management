@@ -1,5 +1,7 @@
 package com.example.taskmanagement.presentation.loot
 
+import com.example.taskmanagement.presentation.ui.theme.TaskTheme
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,7 +42,6 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,7 +60,6 @@ import com.example.taskmanagement.presentation.focus.TextMuted
 import com.example.taskmanagement.presentation.focus.TextPrimary
 import androidx.compose.foundation.layout.width
 
-private val Pixel = FontFamily.Monospace
 
 private fun rarityColor(r: LootRarity): Color = when (r) {
     LootRarity.COMMON -> Color(0xFF9AA4AE)
@@ -153,8 +153,8 @@ fun LootCollectionDialog(viewModel: LootViewModel, onClose: () -> Unit) {
 
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("SATCHEL", fontFamily = Pixel, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimary, letterSpacing = 2.sp)
-                        Text("$foundCount / ${lootItems.size} collected", fontFamily = Pixel, fontSize = 10.sp, color = TextMuted)
+                        Text("SATCHEL", fontFamily = TaskTheme.fontFamily, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimary, letterSpacing = 2.sp)
+                        Text("$foundCount / ${lootItems.size} collected", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = TextMuted)
                     }
 
                     Row(
@@ -167,7 +167,7 @@ fun LootCollectionDialog(viewModel: LootViewModel, onClose: () -> Unit) {
                     ) {
                         Text("\uD83E\uDE99", fontSize = 12.sp)
                         Spacer(Modifier.width(4.dp))
-                        Text("$coins", fontFamily = Pixel, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AmberAccent)
+                        Text("$coins", fontFamily = TaskTheme.fontFamily, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AmberAccent)
                     }
                 }
 
@@ -205,7 +205,7 @@ fun LootCollectionDialog(viewModel: LootViewModel, onClose: () -> Unit) {
                     ) {
                         Text(
                             "Sell all duplicates  (+$dupValue \uD83E\uDE99)",
-                            fontFamily = Pixel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GreenBright
+                            fontFamily = TaskTheme.fontFamily, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GreenBright
                         )
                     }
                 }
@@ -242,9 +242,9 @@ private fun RaritySectionHeader(tier: LootRarity, owned: Int, total: Int) {
                 .background(rc)
         )
         Spacer(Modifier.width(8.dp))
-        Text(tier.label.uppercase(), fontFamily = Pixel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = rc, letterSpacing = 2.sp)
+        Text(tier.label.uppercase(), fontFamily = TaskTheme.fontFamily, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = rc, letterSpacing = 2.sp)
         Spacer(Modifier.weight(1f))
-        Text("$owned / $total", fontFamily = Pixel, fontSize = 10.sp, color = TextMuted)
+        Text("$owned / $total", fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = TextMuted)
     }
 }
 
@@ -279,7 +279,7 @@ private fun ItemCell(item: LootItem, count: Int, onClick: () -> Unit) {
                 modifier = Modifier.fillMaxSize(0.72f)
             )
         } else {
-            Text("?", fontFamily = Pixel, fontSize = 20.sp, color = TextDim)
+            Text("?", fontFamily = TaskTheme.fontFamily, fontSize = 20.sp, color = TextDim)
         }
         if (owned && count > 1) {
             Box(
@@ -289,7 +289,7 @@ private fun ItemCell(item: LootItem, count: Int, onClick: () -> Unit) {
                     .clip(RoundedCornerShape(6.dp))
                     .background(BgDeep.copy(alpha = 0.85f))
                     .padding(horizontal = 4.dp, vertical = 1.dp)
-            ) { Text("\u00D7$count", fontFamily = Pixel, fontSize = 9.sp, color = TextPrimary) }
+            ) { Text("\u00D7$count", fontFamily = TaskTheme.fontFamily, fontSize = 9.sp, color = TextPrimary) }
         }
     }
 }
@@ -336,14 +336,14 @@ private fun ItemDetailDialog(
                         )
                     }
                 }
-                Text(item.name, fontFamily = Pixel, fontSize = 16.sp, color = TextPrimary)
+                Text(item.name, fontFamily = TaskTheme.fontFamily, fontSize = 16.sp, color = TextPrimary)
                 Text(
                     item.rarity.label.uppercase(),
-                    fontFamily = Pixel, fontSize = 10.sp, color = rc, letterSpacing = 2.sp
+                    fontFamily = TaskTheme.fontFamily, fontSize = 10.sp, color = rc, letterSpacing = 2.sp
                 )
                 Text(
                     "Owned \u00D7$count   \u00B7   Sell ${item.rarity.sellPrice} \uD83E\uDE99 each",
-                    fontFamily = Pixel, fontSize = 11.sp, color = TextMuted
+                    fontFamily = TaskTheme.fontFamily, fontSize = 11.sp, color = TextMuted
                 )
                 Box(
                     modifier = Modifier
@@ -356,10 +356,10 @@ private fun ItemDetailDialog(
                 ) {
                     Text(
                         "Sell one  (+${item.rarity.sellPrice})",
-                        fontFamily = Pixel, fontSize = 13.sp, color = BgDeep
+                        fontFamily = TaskTheme.fontFamily, fontSize = 13.sp, color = BgDeep
                     )
                 }
-                Text("Tap outside to close", fontFamily = Pixel, fontSize = 9.sp, color = TextDim)
+                Text("Tap outside to close", fontFamily = TaskTheme.fontFamily, fontSize = 9.sp, color = TextDim)
             }
         }
     }
