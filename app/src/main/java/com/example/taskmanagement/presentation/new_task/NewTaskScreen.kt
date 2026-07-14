@@ -79,9 +79,17 @@ import kotlin.math.roundToInt
 fun NewTaskScreen(
     modifier: Modifier = Modifier,
     viewModel: NewTaskViewModel = viewModel(),
+    editTaskId: Int? = null,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    LaunchedEffect(editTaskId) {
+        if (editTaskId == null) {
+            viewModel.prepareForCreate()
+        } else {
+            viewModel.loadTaskForEdit(editTaskId)
+        }
+    }
     LaunchedEffect(uiState.isTaskSaved) {
         if (uiState.isTaskSaved) {
             onNavigateBack()
@@ -98,7 +106,7 @@ fun NewTaskScreen(
         onEstimatedDurationChange = viewModel::onEstimatedDurationChange,
         onPriorityChange = viewModel::onPriorityChange,
         onTagChange = viewModel::onTagChange,
-        onCreateTask = viewModel::createTask,
+        onSubmitTask = viewModel::createTask,
         onReminderChange = viewModel::onReminderChange,
         onTaskNameFocusChanged = viewModel::onTaskNameFocusChanged,
         onValidateCurrentStep = viewModel::validateCurrentStep
@@ -117,7 +125,7 @@ private fun NewTaskScreen(
     onPriorityChange: (Priority) -> Unit,
     onTagChange: (TaskTag?) -> Unit,
     onReminderChange: (Boolean) -> Unit,
-    onCreateTask: () -> Boolean,
+    onSubmitTask: () -> Boolean,
     onTaskNameFocusChanged: (Boolean) -> Unit,
     onValidateCurrentStep: (Int) -> Boolean
 ) {
@@ -128,9 +136,19 @@ private fun NewTaskScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 24.dp)
+        .padding(horizontal = 24.dp)
     ) {
         Spacer(Modifier.height(22.dp))
+
+        if (state.isEditMode) {
+            Text(
+                text = "Edit Task",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(Modifier.height(14.dp))
+        }
 
         StepIndicator(
             currentStep = currentStep,
@@ -140,7 +158,7 @@ private fun NewTaskScreen(
         Spacer(Modifier.height(16.dp))
 
         val stepTitle = when (currentStep) {
-            0 -> "What do you need to do?"
+            0 -> if (state.isEditMode) "What should change?" else "What do you need to do?"
             1 -> "Schedule & Priority"
             else -> "Organize & remind"
         }
@@ -197,7 +215,7 @@ private fun NewTaskScreen(
                     dueMinute = state.dueMinute,
                     estimatedMinutes = state.estimatedMinutes,
                     selectedPriority = state.selectedPriority,
-                    canContinue = state.canContinueFromStep2,
+                    canContinue = state.canContinueFromStep2 && !state.isLoadingTask && !state.isSaving,
                     onDueDateChange = onDueDateChange,
                     onTimeChange = onTimeChange,
                     onEstimatedDurationChange = onEstimatedDurationChange,
@@ -222,8 +240,18 @@ private fun NewTaskScreen(
             Spacer(Modifier.height(16.dp))
             StepNavigationButtons(
                 showBack = currentStep > 0,
-                primaryLabel = if (currentStep < totalSteps - 1) "Next" else "Create Task",
-                primaryEnabled = if (currentStep == 0) state.canContinueFromStep1 else true,
+                primaryLabel = if (currentStep < totalSteps - 1) {
+                    "Next"
+                } else if (state.isEditMode) {
+                    "Save Changes"
+                } else {
+                    "Create Task"
+                },
+                primaryEnabled = when {
+                    state.isLoadingTask || state.isSaving -> false
+                    currentStep == 0 -> state.canContinueFromStep1
+                    else -> true
+                },
                 onBack = { currentStep-- },
                 onPrimary = {
                     if (currentStep < totalSteps - 1) {
@@ -231,7 +259,7 @@ private fun NewTaskScreen(
                             currentStep++
                         }
                     } else {
-                        if (!onCreateTask() && !state.canContinueFromStep1) {
+                        if (!onSubmitTask() && !state.canContinueFromStep1) {
                             currentStep = 0
                         }
                     }
@@ -803,7 +831,7 @@ private fun NewTaskScreenPrev() {
         onPriorityChange = {},
         onTagChange = {},
         onReminderChange = {},
-        onCreateTask = { true },
+        onSubmitTask = { true },
         onTaskNameFocusChanged = {},
         onValidateCurrentStep = { true }
     )

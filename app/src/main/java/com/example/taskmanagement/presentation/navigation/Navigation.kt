@@ -56,6 +56,7 @@ sealed class Screen(
     object Calendar : Screen("calendar", Icons.Default.CalendarMonth, "Calendar")
     object Analytics : Screen("analytics", Icons.Default.Analytics, "Analytics")
     object NewTask : Screen("NewTask")
+    object EditTask : Screen("editTask")
     object MyTasks : Screen("MyTasks", Icons.Default.Task, title = "My tasks")
 
     object Focus : Screen("focus")
@@ -141,13 +142,36 @@ fun TaskNavigation(
                                 "&overdue=${isTaskOverdue(task)}"
                     )
                 },
+                onEditTask = { task ->
+                    navController.navigate("${Screen.EditTask.route}/${task.id}")
+                },
                 onOpenHub = { navController.navigate(Screen.Hub.route) }
             )
         }
         composable(route = Screen.NewTask.route) { NewTaskScreen(modifier = modifier) { navController.popBackStack() } }
+        composable(
+            route = "${Screen.EditTask.route}/{taskId}",
+            arguments = listOf(
+                navArgument("taskId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val taskId = backStackEntry.arguments?.getInt("taskId") ?: return@composable
+            NewTaskScreen(
+                modifier = modifier,
+                editTaskId = taskId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
         composable(route = Screen.MyTasks.route) { MyTasksScreen(modifier = modifier, navController = navController) }
         composable(route = Screen.Analytics.route) { AnalyticsScreen(modifier = modifier) }
-        composable(route = Screen.Calendar.route) { CalendarScreen(modifier = modifier) }
+        composable(route = Screen.Calendar.route) {
+            CalendarScreen(
+                modifier = modifier,
+                onEditTask = { task ->
+                    navController.navigate("${Screen.EditTask.route}/${task.id}")
+                }
+            )
+        }
 
         composable(
             route = "${Screen.Focus.route}?taskId={taskId}&taskTitle={taskTitle}&tag={tag}&priority={priority}&overdue={overdue}",

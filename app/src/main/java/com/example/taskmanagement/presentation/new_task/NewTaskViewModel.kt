@@ -26,6 +26,9 @@ data class NewTaskUiState(
     val selectedTag: TaskTag? = null,
     val isReminderEnabled: Boolean = false,
     val isTaskSaved: Boolean = false,
+    val isEditMode: Boolean = false,
+    val isLoadingTask: Boolean = false,
+    val isSaving: Boolean = false,
     val errorMessage: String? = null,
     val hasTaskNameBeenFocused: Boolean = false,
     val hasTaskNameLostFocus: Boolean = false,
@@ -71,6 +74,8 @@ class NewTaskViewModel(
 
     private val _uiState = MutableStateFlow(NewTaskUiState.newTask())
     val uiState: StateFlow<NewTaskUiState> = _uiState.asStateFlow()
+    private var originalTask: Task? = null
+    private var loadedEditTaskId: Int? = null
 
     fun onTitleChange(title: String) = _uiState.update { it.copy(title = title) }
     fun onDescriptionChange(description: String) = _uiState.update { it.copy(description = description) }
@@ -90,6 +95,76 @@ class NewTaskViewModel(
     fun onReminderChange(isEnabled: Boolean) = _uiState.update { it.copy(isReminderEnabled = isEnabled) }
     fun onErrorShown() = _uiState.update { it.copy(errorMessage = null) }
     fun onTaskSavedHandled() = _uiState.update { it.copy(isTaskSaved = false) }
+
+    fun prepareForCreate() {
+        if (!_uiState.value.isEditMode) return
+        originalTask = null
+        loadedEditTaskId = null
+        _uiState.value = NewTaskUiState.newTask()
+    }
+
+    fun loadTaskForEdit(taskId: Int) {
+        if (loadedEditTaskId == taskId && originalTask?.id == taskId) return
+        loadedEditTaskId = taskId
+        _uiState.update {
+            it.copy(
+                isEditMode = true,
+                isLoadingTask = true,
+                isSaving = false,
+                errorMessage = null
+            )
+        }
+        viewModelScope.launch {
+            runCatching { taskRepository.getTaskById(taskId) }
+                .onSuccess { task ->
+                    if (task == null) {
+                        originalTask = null
+                        _uiState.update {
+                            it.copy(
+                                isEditMode = true,
+                                isLoadingTask = false,
+                                errorMessage = "Task could not be found."
+                            )
+                        }
+                    } else {
+                        originalTask = task
+                        _uiState.update {
+                            it.copy(
+                                title = task.title,
+                                description = task.description,
+                                dueDate = task.dueDate,
+                                dueHour = task.dueHour,
+                                dueMinute = task.dueMinute,
+                                estimatedMinutes = task.estimatedMinutes.coerceIn(
+                                    MIN_ESTIMATED_MINUTES,
+                                    MAX_ESTIMATED_MINUTES
+                                ),
+                                selectedPriority = priorityFromStoredValue(task.priority),
+                                selectedTag = tagFromStoredValue(task.tags),
+                                isReminderEnabled = task.reminderEnabled,
+                                isTaskSaved = false,
+                                isEditMode = true,
+                                isLoadingTask = false,
+                                isSaving = false,
+                                errorMessage = null,
+                                hasTaskNameBeenFocused = false,
+                                hasTaskNameLostFocus = false,
+                                taskNameValidationRequested = false
+                            )
+                        }
+                    }
+                }
+                .onFailure { throwable ->
+                    _uiState.update {
+                        it.copy(
+                            isEditMode = true,
+                            isLoadingTask = false,
+                            errorMessage = throwable.message ?: "Task could not be loaded."
+                        )
+                    }
+                }
+        }
+    }
 
     fun onTaskNameFocusChanged(isFocused: Boolean) = _uiState.update { state ->
         when {
@@ -128,7 +203,9 @@ class NewTaskViewModel(
     }
 
     fun createTask(): Boolean {
+        if (uiState.value.isEditMode) return saveTaskChanges()
         val state = uiState.value
+        if (state.isSaving) return false
         val trimmedTitle = state.title.trim()
         if (trimmedTitle.isEmpty()) {
             _uiState.update { it.copy(taskNameValidationRequested = true) }
@@ -146,21 +223,94 @@ class NewTaskViewModel(
         )
 
         viewModelScope.launch {
-            val newTask = Task(
-                title = trimmedTitle,
-                description = state.description.trim(),
-                priority = state.selectedPriority.name,
-                reminderEnabled = state.isReminderEnabled,
-                dueDate = state.dueDate,
-                dueHour = state.dueHour,
-                dueMinute = state.dueMinute,
-                estimatedMinutes = estimatedMinutes,
-                tags = selectedTag.name,
-                isCompleted = false
-            )
-            taskRepository.insertTask(newTask)
-            _uiState.update { it.copy(isTaskSaved = true) }
+            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+            runCatching {
+                val newTask = Task(
+                    title = trimmedTitle,
+                    description = state.description.trim(),
+                    priority = state.selectedPriority.name,
+                    reminderEnabled = state.isReminderEnabled,
+                    dueDate = state.dueDate,
+                    dueHour = state.dueHour,
+                    dueMinute = state.dueMinute,
+                    estimatedMinutes = estimatedMinutes,
+                    tags = selectedTag.name,
+                    isCompleted = false
+                )
+                taskRepository.insertTask(newTask)
+            }.onSuccess {
+                _uiState.update { it.copy(isTaskSaved = true, isSaving = false) }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        errorMessage = throwable.message ?: "Task could not be created."
+                    )
+                }
+            }
         }
         return true
     }
+
+    private fun saveTaskChanges(): Boolean {
+        val state = uiState.value
+        if (state.isSaving) return false
+        val trimmedTitle = state.title.trim()
+        if (trimmedTitle.isEmpty()) {
+            _uiState.update { it.copy(taskNameValidationRequested = true) }
+            return false
+        }
+        if (!state.canContinueFromStep2) return false
+        val selectedTag = state.selectedTag
+        if (selectedTag == null) {
+            _uiState.update { it.copy(errorMessage = "Select a category.") }
+            return false
+        }
+        val taskToEdit = originalTask
+        if (taskToEdit == null) {
+            _uiState.update { it.copy(errorMessage = "Task could not be found.") }
+            return false
+        }
+        val estimatedMinutes = state.estimatedMinutes.coerceIn(
+            MIN_ESTIMATED_MINUTES,
+            MAX_ESTIMATED_MINUTES
+        )
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+            runCatching {
+                val latestTask = taskRepository.getTaskById(taskToEdit.id) ?: taskToEdit
+                val updatedTask = latestTask.copy(
+                    title = trimmedTitle,
+                    description = state.description.trim(),
+                    priority = state.selectedPriority.name,
+                    reminderEnabled = state.isReminderEnabled,
+                    dueDate = state.dueDate,
+                    dueHour = state.dueHour,
+                    dueMinute = state.dueMinute,
+                    estimatedMinutes = estimatedMinutes,
+                    tags = selectedTag.name,
+                    isCompleted = latestTask.isCompleted
+                )
+                taskRepository.updateTask(updatedTask)
+            }.onSuccess {
+                _uiState.update { it.copy(isTaskSaved = true, isSaving = false) }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        errorMessage = throwable.message ?: "Task could not be saved."
+                    )
+                }
+            }
+        }
+        return true
+    }
+
+    private fun priorityFromStoredValue(priority: String): Priority =
+        Priority.entries.firstOrNull { it.name.equals(priority.trim(), ignoreCase = true) }
+            ?: Priority.MEDIUM
+
+    private fun tagFromStoredValue(tag: String): TaskTag? =
+        TaskTag.entries.firstOrNull { it.name.equals(tag.trim(), ignoreCase = true) }
 }

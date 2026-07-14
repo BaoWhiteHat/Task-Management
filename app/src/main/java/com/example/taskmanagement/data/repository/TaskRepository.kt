@@ -10,6 +10,7 @@ interface TaskRepository {
     fun getTasksForDate(date: LocalDate): Flow<List<Task>>
     fun getDateWithTasks(startDate: LocalDate, endDate: LocalDate): Flow<List<LocalDate>>
     fun getTasksInDateRange(startDate: LocalDate, endDate: LocalDate): Flow<List<Task>>
+    suspend fun getTaskById(taskId: Int): Task?
 
     suspend fun insertTask(task: Task)
     suspend fun updateTask(task: Task)

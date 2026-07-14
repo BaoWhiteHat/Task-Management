@@ -32,7 +32,10 @@ data class HomeUIState(
     val remainingCount: Int = 0,
     val sycStatus: SyncStatus = SyncStatus.IDLE,
     val sortOrder: SortOrder = SortOrder.DEFAULT,
-    val currentTime: LocalDateTime = LocalDateTime.now()
+    val currentTime: LocalDateTime = LocalDateTime.now(),
+    val deletingTaskId: Int? = null,
+    val deleteErrorTaskId: Int? = null,
+    val deleteErrorMessage: String? = null
 )
 
 class HomeViewModel(
@@ -41,6 +44,7 @@ class HomeViewModel(
     private val _sortOrder = MutableStateFlow(SortOrder.DEFAULT)
     private val _syncStatus = MutableStateFlow(SyncStatus.IDLE)
     private val _currentTime = MutableStateFlow(LocalDateTime.now())
+    private val _deleteState = MutableStateFlow(TaskDeleteState())
     private val _todayTasksFlow = taskRepository.getAllTasks()
 
     init {
@@ -56,9 +60,10 @@ class HomeViewModel(
         _todayTasksFlow,
         _syncStatus,
         _sortOrder,
-        _currentTime
+        _currentTime,
+        _deleteState
     ) {
-        tasks, syncStatus, sortOrder, currentTime ->
+        tasks, syncStatus, sortOrder, currentTime, deleteState ->
         val today = currentTime.toLocalDate()
         val actionableTasks = tasks.filter { task ->
             task.dueDate == today || (!task.isCompleted && task.dueDate.isBefore(today))
@@ -72,7 +77,10 @@ class HomeViewModel(
             remainingCount = remainingTodayCount,
             sycStatus = syncStatus,
             sortOrder = sortOrder,
-            currentTime = currentTime
+            currentTime = currentTime,
+            deletingTaskId = deleteState.deletingTaskId,
+            deleteErrorTaskId = deleteState.errorTaskId,
+            deleteErrorMessage = deleteState.errorMessage
         )
     }.stateIn(
         scope = viewModelScope,
@@ -116,9 +124,39 @@ class HomeViewModel(
         }
     }
 
+    fun onDeleteTask(task: Task) {
+        if (_deleteState.value.deletingTaskId == task.id) return
+        viewModelScope.launch {
+            _deleteState.value = TaskDeleteState(deletingTaskId = task.id)
+            runCatching { taskRepository.deleteTask(task) }
+                .onSuccess {
+                    _deleteState.value = TaskDeleteState()
+                }
+                .onFailure { throwable ->
+                    _deleteState.value = TaskDeleteState(
+                        errorTaskId = task.id,
+                        errorMessage = throwable.message ?: "Task could not be deleted."
+                    )
+                }
+        }
+    }
+
+    fun onDeleteErrorDismissed() {
+        _deleteState.value = _deleteState.value.copy(
+            errorTaskId = null,
+            errorMessage = null
+        )
+    }
+
     fun onSortChanged(sortOrder: SortOrder){
         _sortOrder.value = sortOrder
     }
 
 
 }
+
+private data class TaskDeleteState(
+    val deletingTaskId: Int? = null,
+    val errorTaskId: Int? = null,
+    val errorMessage: String? = null
+)

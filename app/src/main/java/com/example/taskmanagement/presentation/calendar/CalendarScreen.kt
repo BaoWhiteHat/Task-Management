@@ -40,6 +40,7 @@ import java.util.Locale
 @Composable
 fun CalendarScreen(
     modifier: Modifier = Modifier,
+    onEditTask: (Task) -> Unit = {},
     viewModel: CalendarViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -50,6 +51,9 @@ fun CalendarScreen(
         onNextWeek = viewModel::onNextWeek,
         onNextMonth = viewModel::onNextMonth,
         onTaskCheckedChange = viewModel::onTaskCheckedChange,
+        onEditTask = onEditTask,
+        onDeleteTask = viewModel::onDeleteTask,
+        onDeleteErrorDismissed = viewModel::onDeleteErrorDismissed,
         onViewChanged = viewModel::onViewChanged,
         onPreviousWeek = viewModel::onPreviousWeek,
         onPreviousMonth = viewModel::onPreviousMonth,
@@ -66,7 +70,10 @@ private fun CalendarScreen(
     onNextWeek: () -> Unit,
     onPreviousWeek: () -> Unit,
     onViewChanged: (CalenderView) -> Unit,
-    onTaskCheckedChange: (Task, Boolean) -> Unit
+    onTaskCheckedChange: (Task, Boolean) -> Unit,
+    onEditTask: (Task) -> Unit = {},
+    onDeleteTask: (Task) -> Unit = {},
+    onDeleteErrorDismissed: () -> Unit = {}
 ) {
     val today = remember { LocalDate.now() }
     val isMonthView = state.selectedView == CalenderView.MONTH
@@ -201,7 +208,16 @@ private fun CalendarScreen(
                         task = task,
                         onCheckedChange = { isChecked ->
                             onTaskCheckedChange(task, isChecked)
-                        }
+                        },
+                        onEditClick = onEditTask,
+                        onDeleteClick = onDeleteTask,
+                        isDeleteInProgress = state.deletingTaskId == task.id,
+                        deleteErrorMessage = if (state.deleteErrorTaskId == task.id) {
+                            state.deleteErrorMessage
+                        } else {
+                            null
+                        },
+                        onDeleteErrorDismissed = onDeleteErrorDismissed
                     )
                 }
             }

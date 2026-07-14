@@ -51,6 +51,11 @@ fun MyTasksScreen(
         state = uiState,
         onTagChange = viewModel::onTagChange,
         onTaskCheckedChange = viewModel::onTaskCheckedChange,
+        onEditTask = { task ->
+            navController.navigate("${Screen.EditTask.route}/${task.id}")
+        },
+        onDeleteTask = viewModel::onDeleteTask,
+        onDeleteErrorDismissed = viewModel::onDeleteErrorDismissed,
         onFocusClick = { task ->
             navController.navigate(
                         "${Screen.Focus.route}?taskId=${task.id}&taskTitle=${Uri.encode(task.title)}" +
@@ -68,6 +73,9 @@ private fun MyTaskScreen(
     state: MyTasksUiState,
     onTagChange: (TaskTag) -> Unit,
     onTaskCheckedChange: (Task, Boolean) -> Unit,
+    onEditTask: (Task) -> Unit = {},
+    onDeleteTask: (Task) -> Unit = {},
+    onDeleteErrorDismissed: () -> Unit = {},
     onFocusClick: (Task) -> Unit = {}
 ) {
     Column(
@@ -136,7 +144,16 @@ private fun MyTaskScreen(
                         onCheckedChange = { isCompleted ->
                             onTaskCheckedChange(task, isCompleted)
                         },
-                        onFocusClick = { onFocusClick(task) }
+                        onFocusClick = { onFocusClick(task) },
+                        onEditClick = onEditTask,
+                        onDeleteClick = onDeleteTask,
+                        isDeleteInProgress = state.deletingTaskId == task.id,
+                        deleteErrorMessage = if (state.deleteErrorTaskId == task.id) {
+                            state.deleteErrorMessage
+                        } else {
+                            null
+                        },
+                        onDeleteErrorDismissed = onDeleteErrorDismissed
                     )
                 }
             }

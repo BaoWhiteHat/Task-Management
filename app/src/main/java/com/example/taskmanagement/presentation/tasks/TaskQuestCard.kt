@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -32,6 +33,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -75,9 +77,15 @@ fun TaskQuestCard(
     modifier: Modifier = Modifier,
     task: Task,
     onCheckedChange: (Boolean) -> Unit,
-    onFocusClick: (() -> Unit)? = null
+    onFocusClick: (() -> Unit)? = null,
+    onEditClick: ((Task) -> Unit)? = null,
+    onDeleteClick: ((Task) -> Unit)? = null,
+    isDeleteInProgress: Boolean = false,
+    deleteErrorMessage: String? = null,
+    onDeleteErrorDismissed: () -> Unit = {}
 ) {
     var showDetails by rememberSaveable(task.id) { mutableStateOf(false) }
+    var showDeleteConfirmation by rememberSaveable(task.id) { mutableStateOf(false) }
     val completed = task.isCompleted
     val overdue = isTaskOverdue(task)
     val priorityUi = taskPriorityUi(task.priority)
@@ -213,7 +221,68 @@ fun TaskQuestCard(
                 showDetails = false
                 onFocusClick?.invoke()
             },
+            onEditTask = {
+                showDetails = false
+                onEditClick?.invoke(task)
+            },
+            onRequestDelete = {
+                showDeleteConfirmation = true
+            },
+            isDeleteInProgress = isDeleteInProgress,
+            deleteErrorMessage = deleteErrorMessage,
             onDismiss = { showDetails = false }
+        )
+    }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!isDeleteInProgress) {
+                    showDeleteConfirmation = false
+                    onDeleteErrorDismissed()
+                }
+            },
+            title = { Text("Delete this task?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("This action cannot be undone.")
+                    deleteErrorMessage?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (!isDeleteInProgress) {
+                            onDeleteClick?.invoke(task)
+                        }
+                    },
+                    enabled = !isDeleteInProgress,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        if (!isDeleteInProgress) {
+                            showDeleteConfirmation = false
+                            onDeleteErrorDismissed()
+                        }
+                    },
+                    enabled = !isDeleteInProgress
+                ) {
+                    Text("Cancel")
+                }
+            }
         )
     }
 }
@@ -283,6 +352,10 @@ private fun TaskDetailsBottomSheet(
     badge: TaskCardBadgeUi,
     canStartFocus: Boolean,
     onStartFocus: () -> Unit,
+    onEditTask: () -> Unit,
+    onRequestDelete: () -> Unit,
+    isDeleteInProgress: Boolean,
+    deleteErrorMessage: String?,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -363,24 +436,27 @@ private fun TaskDetailsBottomSheet(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = .45f))
 
-            Row(
+            deleteErrorMessage?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = .55f))
+                        .padding(10.dp)
+                )
+            }
+
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    )
-                ) {
-                    Text("Close")
-                }
                 if (canStartFocus) {
                     Button(
                         onClick = onStartFocus,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
@@ -389,6 +465,45 @@ private fun TaskDetailsBottomSheet(
                     ) {
                         Text("Start Focus")
                     }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onEditTask,
+                        enabled = !isDeleteInProgress,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
+                        Text("Edit Task")
+                    }
+                    OutlinedButton(
+                        onClick = onRequestDelete,
+                        enabled = !isDeleteInProgress,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Delete Task")
+                    }
+                }
+                OutlinedButton(
+                    onClick = onDismiss,
+                    enabled = !isDeleteInProgress,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                ) {
+                    Text("Close")
                 }
             }
         }

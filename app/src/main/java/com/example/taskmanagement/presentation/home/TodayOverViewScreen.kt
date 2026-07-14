@@ -66,6 +66,7 @@ fun TodayOverViewScreen(
     modifier: Modifier = Modifier,
     onStartFocus: () -> Unit = {},
     onTaskFocus: (Task) -> Unit = {},
+    onEditTask: (Task) -> Unit = {},
     onOpenHub: () -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -77,6 +78,9 @@ fun TodayOverViewScreen(
         onSortChanged = viewModel::onSortChanged,
         onStartFocus = onStartFocus,
         onTaskFocus = onTaskFocus,
+        onEditTask = onEditTask,
+        onDeleteTask = viewModel::onDeleteTask,
+        onDeleteErrorDismissed = viewModel::onDeleteErrorDismissed,
         onOpenHub = onOpenHub,
         modifier = modifier
     )
@@ -91,6 +95,9 @@ private fun TodayOverViewScreen(
     onSortChanged: (SortOrder) -> Unit,
     onStartFocus: () -> Unit = {},
     onTaskFocus: (Task) -> Unit = {},
+    onEditTask: (Task) -> Unit = {},
+    onDeleteTask: (Task) -> Unit = {},
+    onDeleteErrorDismissed: () -> Unit = {},
     onOpenHub: () -> Unit = {}
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
@@ -178,7 +185,16 @@ private fun TodayOverViewScreen(
                             ),
                             task = task,
                             onCheckedChange = { onTaskCheckedChanged(task, it) },
-                            onFocusClick = { onTaskFocus(task) }
+                            onFocusClick = { onTaskFocus(task) },
+                            onEditClick = onEditTask,
+                            onDeleteClick = onDeleteTask,
+                            isDeleteInProgress = state.deletingTaskId == task.id,
+                            deleteErrorMessage = if (state.deleteErrorTaskId == task.id) {
+                                state.deleteErrorMessage
+                            } else {
+                                null
+                            },
+                            onDeleteErrorDismissed = onDeleteErrorDismissed
                         )
                     }
                     if (state.completedCount > 0) {

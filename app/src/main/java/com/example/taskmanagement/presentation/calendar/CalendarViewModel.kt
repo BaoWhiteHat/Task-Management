@@ -30,7 +30,10 @@ data class CalenderUiState(
     val selectedView: CalenderView = CalenderView.MONTH,
     val tasksForSelectedDate: List<Task> = emptyList(),
     val markedDatesInMonth: Set<LocalDate> = emptySet(),
-    val currentWeekMonday: LocalDate = LocalDate.now().with(DayOfWeek.MONDAY)
+    val currentWeekMonday: LocalDate = LocalDate.now().with(DayOfWeek.MONDAY),
+    val deletingTaskId: Int? = null,
+    val deleteErrorTaskId: Int? = null,
+    val deleteErrorMessage: String? = null
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -40,6 +43,7 @@ class CalendarViewModel(
     private val _selectedDate = MutableStateFlow(LocalDate.now())
     private val _currentMonth = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
     private val _selectedView = MutableStateFlow(CalenderView.MONTH)
+    private val _deleteState = MutableStateFlow(TaskDeleteState())
 
 
     private val _tasksForSelectedDate: StateFlow<List<Task>> = _selectedDate
@@ -60,21 +64,35 @@ class CalendarViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptySet()
         )
+    private val _calendarTasksState: StateFlow<Pair<List<Task>, Set<LocalDate>>> = combine(
+        _tasksForSelectedDate,
+        _markedDatesInMonth
+    ) { tasks, markedDates ->
+        tasks to markedDates
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList<Task>() to emptySet()
+    )
 
     val uiState: StateFlow<CalenderUiState> = combine(
         _selectedDate,
         _currentMonth,
         _selectedView,
-        _tasksForSelectedDate,
-        _markedDatesInMonth
-    ) {selectedDate,currentMonth,view,tasks,markedDates ->
+        _calendarTasksState,
+        _deleteState
+    ) {selectedDate,currentMonth,view,calendarTasksState,deleteState ->
+        val (tasks, markedDates) = calendarTasksState
         CalenderUiState(
             selectedDate = selectedDate,
             currentMonth = currentMonth,
             selectedView = view,
             tasksForSelectedDate = tasks,
             markedDatesInMonth = markedDates,
-            currentWeekMonday = selectedDate.with(DayOfWeek.MONDAY)
+            currentWeekMonday = selectedDate.with(DayOfWeek.MONDAY),
+            deletingTaskId = deleteState.deletingTaskId,
+            deleteErrorTaskId = deleteState.errorTaskId,
+            deleteErrorMessage = deleteState.errorMessage
         )
     }.stateIn(
         scope = viewModelScope,
@@ -102,9 +120,39 @@ class CalendarViewModel(
         }
     }
 
+    fun onDeleteTask(task: Task) {
+        if (_deleteState.value.deletingTaskId == task.id) return
+        viewModelScope.launch {
+            _deleteState.value = TaskDeleteState(deletingTaskId = task.id)
+            runCatching { taskRepository.deleteTask(task) }
+                .onSuccess {
+                    _deleteState.value = TaskDeleteState()
+                }
+                .onFailure { throwable ->
+                    _deleteState.value = TaskDeleteState(
+                        errorTaskId = task.id,
+                        errorMessage = throwable.message ?: "Task could not be deleted."
+                    )
+                }
+        }
+    }
+
+    fun onDeleteErrorDismissed() {
+        _deleteState.value = _deleteState.value.copy(
+            errorTaskId = null,
+            errorMessage = null
+        )
+    }
+
     fun onViewChanged(view: CalenderView){_selectedView.value = view}
 
 
 }
+
+private data class TaskDeleteState(
+    val deletingTaskId: Int? = null,
+    val errorTaskId: Int? = null,
+    val errorMessage: String? = null
+)
 
 

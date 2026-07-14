@@ -41,6 +41,8 @@ class TaskRepositoryImpl(
         endDate: LocalDate
     ): Flow<List<Task>> = taskDao.getTasksInDateRange(startDate, endDate)
 
+    override suspend fun getTaskById(taskId: Int): Task? = taskDao.getTaskById(taskId)
+
     override suspend fun insertTask(task: Task) {
         val newId = taskDao.insertTask(task.copy(syncStatus = SyncStatus.CREATED))
         applyReminder(task.copy(id = newId.toInt()))
@@ -48,15 +50,25 @@ class TaskRepositoryImpl(
     }
 
     override suspend fun updateTask(task: Task) {
-        taskDao.updateTask(task.copy(syncStatus = SyncStatus.UPDATED))
-        applyReminder(task)
+        val syncStatus = when (task.syncStatus) {
+            SyncStatus.CREATED -> SyncStatus.CREATED
+            SyncStatus.DELETED -> SyncStatus.DELETED
+            else -> SyncStatus.UPDATED
+        }
+        val taskToUpdate = task.copy(syncStatus = syncStatus)
+        taskDao.updateTask(taskToUpdate)
+        applyReminder(taskToUpdate)
         scheduleSyc()
     }
 
     override suspend fun deleteTask(task: Task) {
-        taskDao.updateTask(task.copy(syncStatus = SyncStatus.DELETED))
         ReminderScheduler.cancel(appContext, task.id)
-        scheduleSyc()
+        if (task.syncStatus == SyncStatus.CREATED && task.remoteId.isBlank()) {
+            taskDao.delete(task)
+        } else {
+            taskDao.updateTask(task.copy(syncStatus = SyncStatus.DELETED))
+            scheduleSyc()
+        }
     }
 
     override suspend fun refreshTasksFromServer() {
