@@ -15,7 +15,7 @@ private val RpgBgDeep       = Color(0xFF081105)
 private val RpgSurface1      = Color(0xFF101C0C)
 private val RpgSurface2      = Color(0xFF162610)
 private val RpgBorderSubtle  = Color(0xFF2D4A1E)
-private val RpgGreenBright   = BrandGreen
+private val RpgGreenBright   = RpgLimeGreen
 private val RpgGreenDark     = Color(0xFF4F9A1F)
 private val RpgAmber         = Color(0xFFFFB020)
 private val RpgTextPrimary   = Color(0xFFF2F8E8)
@@ -56,10 +56,10 @@ private val RpgScheme = darkColorScheme(
 )
 
 private val AuroraLightScheme = lightColorScheme(
-    primary            = BrandGreen,
-    onPrimary          = LightOnBackground,
-    primaryContainer   = AuroraGreen50,
-    onPrimaryContainer = AuroraGreen900,
+    primary            = LightRpgPrimaryCta,
+    onPrimary          = LightRpgOnPrimary,
+    primaryContainer   = LightRpgSelectedBackground,
+    onPrimaryContainer = LightRpgPressedCta,
     secondary          = AuroraAmber,
     onSecondary        = Color.White,
     secondaryContainer = AuroraAmberLight,
@@ -114,6 +114,12 @@ data class TaskExtendedColors(
     val subText: Color,
     val cardBg: Color,
     val accentColor: Color,
+    val rpgPrimaryCta: Color,
+    val rpgPressedCta: Color,
+    val rpgSelectedBorder: Color,
+    val rpgHighlight: Color,
+    val rpgSelectedBackground: Color,
+    val rpgOnPrimaryCta: Color,
 
     val taskCardSurface: Color,
     val taskCardBorder: Color,
@@ -162,6 +168,12 @@ val RpgExtendedColors = TaskExtendedColors(
     subText     = RpgTextMuted,
     cardBg      = RpgSurface1,
     accentColor = RpgAmber,
+    rpgPrimaryCta = RpgGreenBright,
+    rpgPressedCta = RpgGreenDark,
+    rpgSelectedBorder = RpgGreenBright,
+    rpgHighlight = RpgGreenBright,
+    rpgSelectedBackground = RpgSurface2,
+    rpgOnPrimaryCta = RpgBgDeep,
 
     taskCardSurface = Color(0xFF101A0C),
     taskCardBorder = RpgBorderSubtle,
@@ -210,6 +222,12 @@ val LightExtendedColors = TaskExtendedColors(
     subText     = Color(0xFF6F7769),
     cardBg      = LightCardBg,
     accentColor = AuroraAmber,
+    rpgPrimaryCta = LightRpgPrimaryCta,
+    rpgPressedCta = LightRpgPressedCta,
+    rpgSelectedBorder = LightRpgSelectedBorder,
+    rpgHighlight = LightRpgHighlight,
+    rpgSelectedBackground = LightRpgSelectedBackground,
+    rpgOnPrimaryCta = LightRpgOnPrimary,
 
     taskCardSurface = Color.White,
     taskCardBorder = Color(0xFFE2E6DE),
@@ -244,9 +262,9 @@ data class AppearanceControlColors(
 )
 
 val LightAppearanceControlColors = AppearanceControlColors(
-    selectedContainer = Color(0xFFE4F7C4),
-    selectedContent = Color(0xFF234B18),
-    selectedBorder = Color(0xFF9DDE36),
+    selectedContainer = LightRpgSelectedBackground,
+    selectedContent = LightRpgPrimaryCta,
+    selectedBorder = LightRpgSelectedBorder,
     unselectedContainer = Color.Transparent,
     unselectedContent = Color(0xFF477565),
     controlContainer = Color(0xFFEDF5F1),
@@ -257,7 +275,7 @@ val LightAppearanceControlColors = AppearanceControlColors(
 val DarkAppearanceControlColors = AppearanceControlColors(
     selectedContainer = Color(0xFF29481E),
     selectedContent = Color(0xFFDDFC9C),
-    selectedBorder = BrandGreen,
+    selectedBorder = RpgLimeGreen,
     unselectedContainer = Color.Transparent,
     unselectedContent = Color(0xFFA5B9AC),
     controlContainer = Color(0xFF17221A),

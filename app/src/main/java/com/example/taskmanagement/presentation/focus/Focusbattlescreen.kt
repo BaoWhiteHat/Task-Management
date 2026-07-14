@@ -557,7 +557,7 @@ private fun BattleControls(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
-                .background(if (isRunning) Surface2 else GreenBright)
+                .background(if (isRunning) Surface2 else palette.green)
                 .then(if (isRunning) Modifier.border(0.5.dp, AmberAccent, RoundedCornerShape(14.dp)) else Modifier)
                 .clickable(onClick = if (isRunning) onPause else onStart)
                 .padding(vertical = 16.dp),
@@ -568,7 +568,7 @@ private fun BattleControls(
                 fontFamily = TaskTheme.fontFamily,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (isRunning) AmberAccent else BgDeep,
+                color = if (isRunning) AmberAccent else if (palette.isLight) Color.White else BgDeep,
                 letterSpacing = 1.sp
             )
         }

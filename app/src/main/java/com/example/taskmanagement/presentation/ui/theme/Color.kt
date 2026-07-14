@@ -2,7 +2,17 @@ package com.example.taskmanagement.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val BrandGreen = Color(0xFFB7F34A)
+val RpgLimeGreen = Color(0xFFB7F34A)
+
+// Forest green accents used by the light RPG UI.
+val LightRpgPrimaryCta = Color(0xFF4F7D2A)
+val LightRpgPressedCta = Color(0xFF3D6420)
+val LightRpgSelectedBorder = Color(0xFF5B8F2A)
+val LightRpgHighlight = Color(0xFF6FAF35)
+val LightRpgSelectedBackground = Color(0xFFEDF5E8)
+val LightRpgOnPrimary = Color(0xFFFFFFFF)
+
+val BrandGreen = LightRpgPrimaryCta
 
 //  AURORA GREEN  (Light Theme)
 

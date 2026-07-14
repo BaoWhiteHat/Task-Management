@@ -4,10 +4,13 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -49,6 +52,9 @@ fun FocusSetupScreen(
     onStartSession: () -> Unit
 ) {
     val profile = state.gameProfile
+    val colors = TaskTheme.colors
+    val startInteractionSource = remember { MutableInteractionSource() }
+    val isStartPressed by startInteractionSource.collectIsPressedAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -162,8 +168,12 @@ fun FocusSetupScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.primary)
-                .clickable(onClick = onStartSession)
+                .background(if (isStartPressed) colors.rpgPressedCta else colors.rpgPrimaryCta)
+                .clickable(
+                    interactionSource = startInteractionSource,
+                    indication = LocalIndication.current,
+                    onClick = onStartSession
+                )
                 .padding(vertical = 16.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -175,12 +185,12 @@ fun FocusSetupScreen(
                     text = "Enter Focus Room",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = colors.rpgOnPrimaryCta
                 )
                 Text(
                     text = "${state.selectedPreset.totalMinutes}m",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .7f)
+                    color = colors.rpgOnPrimaryCta.copy(alpha = .7f)
                 )
             }
         }
@@ -277,6 +287,7 @@ private fun HeaderSection(
 private fun XpLevelBar(
     profile: com.example.taskmanagement.data.local.models.GameProfile
 ) {
+    val colors = TaskTheme.colors
     val animatedProgress by animateFloatAsState(
         targetValue = profile.xpProgress,
         animationSpec = tween(600),
@@ -303,7 +314,7 @@ private fun XpLevelBar(
                         text = "Lv.${profile.level}",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = colors.rpgHighlight
                     )
                     Text(
                         text = profile.title,
@@ -329,7 +340,7 @@ private fun XpLevelBar(
                         .fillMaxHeight()
                         .fillMaxWidth(animatedProgress)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.primary)
+                        .background(colors.rpgHighlight)
                 )
             }
             Text(
@@ -352,6 +363,7 @@ private fun XpLevelBar(
 
 @Composable
 private fun FocusTaskCard(taskTitle: String, isOverdueEncounter: Boolean) {
+    val colors = TaskTheme.colors
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -384,7 +396,7 @@ private fun FocusTaskCard(taskTitle: String, isOverdueEncounter: Boolean) {
                 text = taskTitle,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary
+                color = colors.rpgHighlight
             )
         }
     }
@@ -397,14 +409,15 @@ private fun PresetCard(
     isEnabled: Boolean,
     onClick: () -> Unit
 ) {
+    val colors = TaskTheme.colors
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary
+        targetValue = if (isSelected) colors.rpgSelectedBorder
         else MaterialTheme.colorScheme.outline.copy(alpha = .3f),
         animationSpec = tween(200),
         label = "border"
     )
     val bgColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+        targetValue = if (isSelected) colors.rpgSelectedBackground
         else MaterialTheme.colorScheme.surfaceVariant,
         animationSpec = tween(200),
         label = "bg"
@@ -435,7 +448,7 @@ private fun PresetCard(
                     modifier = Modifier
                         .size(10.dp)
                         .background(
-                            if (isSelected) MaterialTheme.colorScheme.primary
+                            if (isSelected) colors.rpgSelectedBorder
                             else MaterialTheme.colorScheme.outline.copy(alpha = .4f),
                             CircleShape
                         )
@@ -458,7 +471,7 @@ private fun PresetCard(
                     text = "${preset.totalMinutes}m",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isSelected) MaterialTheme.colorScheme.primary
+                    color = if (isSelected) colors.rpgHighlight
                     else TaskTheme.colors.subText
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -485,6 +498,7 @@ private fun SoundItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val colors = TaskTheme.colors
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable(enabled = isUnlocked, onClick = onClick)
@@ -494,12 +508,12 @@ private fun SoundItem(
                 .size(56.dp)
                 .clip(CircleShape)
                 .background(
-                    if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                    if (isSelected) colors.rpgSelectedBackground
                     else MaterialTheme.colorScheme.surfaceVariant
                 )
                 .then(
                     if (isSelected) Modifier.border(
-                        2.dp, MaterialTheme.colorScheme.primary, CircleShape
+                        2.dp, colors.rpgSelectedBorder, CircleShape
                     ) else Modifier
                 ),
             contentAlignment = Alignment.Center
@@ -545,6 +559,7 @@ private fun TomeChip(
     isArmed: Boolean,
     onClick: () -> Unit
 ) {
+    val colors = TaskTheme.colors
     val context = LocalContext.current
     val resId = remember(tome.drawableName) {
         if (tome.drawableName.isBlank()) 0
@@ -563,12 +578,12 @@ private fun TomeChip(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
             .background(
-                if (isArmed) MaterialTheme.colorScheme.primaryContainer
+                if (isArmed) colors.rpgSelectedBackground
                 else MaterialTheme.colorScheme.surfaceVariant
             )
             .border(
                 width = if (isArmed) 1.5.dp else 0.5.dp,
-                color = if (isArmed) MaterialTheme.colorScheme.primary
+                color = if (isArmed) colors.rpgSelectedBorder
                 else MaterialTheme.colorScheme.outline.copy(alpha = .3f),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -611,7 +626,7 @@ private fun TomeChip(
             Text(
                 text = if (isArmed) "Armed \u00B7 tap to remove" else buffShort,
                 style = MaterialTheme.typography.labelSmall,
-                color = if (isArmed) MaterialTheme.colorScheme.primary
+                color = if (isArmed) colors.rpgHighlight
                 else TaskTheme.colors.success,
                 fontSize = 10.sp
             )
