@@ -2,6 +2,7 @@ package com.example.taskmanagement.presentation.tasks
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,8 +11,10 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +30,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -37,8 +41,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,6 +55,19 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val taskDateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH)
+private val statusStripWidth = 4.dp
+private val statusCheckboxCenterX = 34.dp
+private val taskContentStart = 72.dp
+private val lightTaskCardHighBorder = Color(0xFFF25545)
+private val lightTaskCardMediumBorder = Color(0xFFC47A00)
+private val lightTaskCardLowBorder = Color(0xFF5B8F2A)
+private val lightTaskCardOverdueBorder = Color(0xFFE53935)
+private val lightTaskCardCompletedBorder = Color(0xFF4CAF50)
+private val darkTaskCardHighBorder = Color(0xFFFF7B6B)
+private val darkTaskCardMediumBorder = Color(0xFFFFB020)
+private val darkTaskCardLowBorder = Color(0xFFB7F34A)
+private val darkTaskCardOverdueBorder = Color(0xFFFF6B5E)
+private val darkTaskCardCompletedBorder = Color(0xFF86D72F)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,93 +84,123 @@ fun TaskQuestCard(
     val badge = taskCardBadge(task)
     val priorityColor = priorityUi.accentColor
     val accentColor = when {
-        overdue -> TaskOverdueAccent
+        overdue -> TaskTheme.colors.overdueAccent
         completed -> TaskTheme.colors.success
         else -> priorityColor
     }
+    val defaultSurface = TaskTheme.colors.taskCardSurface.copy(alpha = .96f)
     val surface = when {
-        overdue -> TaskTheme.colors.taskCardOverdueSurface.copy(alpha = .92f)
+        overdue -> TaskTheme.colors.overdueAccent.copy(alpha = .035f).compositeOver(defaultSurface)
         completed -> TaskTheme.colors.taskCardCompletedSurface.copy(alpha = .9f)
-        else -> TaskTheme.colors.taskCardSurface.copy(alpha = .96f)
+        else -> defaultSurface
     }
+    val darkTheme = MaterialTheme.colorScheme.background.luminance() < .5f
     val borderColor = when {
-        overdue -> TaskTheme.colors.taskCardOverdueBorder
-        completed -> TaskTheme.colors.taskCardCompletedBorder
-        else -> TaskTheme.colors.taskCardBorder
+        overdue -> if (darkTheme) darkTaskCardOverdueBorder else lightTaskCardOverdueBorder
+        completed -> if (darkTheme) darkTaskCardCompletedBorder else lightTaskCardCompletedBorder
+        priorityUi.level == TaskPriorityLevel.HIGH -> {
+            if (darkTheme) darkTaskCardHighBorder else lightTaskCardHighBorder
+        }
+        priorityUi.level == TaskPriorityLevel.MEDIUM -> {
+            if (darkTheme) darkTaskCardMediumBorder else lightTaskCardMediumBorder
+        }
+        else -> if (darkTheme) darkTaskCardLowBorder else lightTaskCardLowBorder
+    }
+    val statusStripColor = when {
+        overdue -> TaskTheme.colors.overdueAccent
+        completed -> TaskTheme.colors.success
+        else -> priorityColor.copy(alpha = .55f)
     }
     val shape = RoundedCornerShape(13.dp)
 
-    Row(
+    Surface(
         modifier = modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 2.dp,
-                shape = shape,
-                ambientColor = borderColor.copy(alpha = .08f),
-                spotColor = borderColor.copy(alpha = .08f)
-            )
-            .clip(shape)
-            .background(surface)
-            .border(1.dp, borderColor, shape)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxWidth(),
+        shape = shape,
+        color = surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        border = BorderStroke(1.25.dp, borderColor),
+        shadowElevation = 0.dp,
+        tonalElevation = 0.dp
     ) {
         Box(
             modifier = Modifier
-                .size(width = 34.dp, height = 38.dp)
-                .clip(RoundedCornerShape(9.dp))
-                .background(accentColor.copy(alpha = if (completed) .12f else .08f)),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .clip(shape)
         ) {
-            Checkbox(
-                checked = completed,
-                onCheckedChange = onCheckedChange,
-                colors = CheckboxDefaults.colors(
-                    checkedColor = accentColor,
-                    uncheckedColor = accentColor.copy(alpha = .75f),
-                    checkmarkColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                modifier = Modifier.size(24.dp)
-            )
-        }
-
-        Spacer(Modifier.width(10.dp))
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .clickable { showDetails = true }
-                .padding(vertical = 2.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        letterSpacing = 0.sp
-                    ),
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    color = if (completed) MaterialTheme.colorScheme.onSurface.copy(alpha = .62f)
-                    else MaterialTheme.colorScheme.onSurface,
-                    textDecoration = if (completed) TextDecoration.LineThrough else TextDecoration.None,
-                    modifier = Modifier.weight(1f)
+            Box(modifier = Modifier.matchParentSize()) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .fillMaxHeight()
+                        .width(statusStripWidth)
+                        .background(statusStripColor)
                 )
-
-                Spacer(Modifier.width(8.dp))
-
-                StateBadge(badge.label, badge.color, badge.backgroundColor)
             }
 
-            TaskMetadataLine(
-                task = task,
-                completed = completed,
-                overdue = overdue
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 10.dp, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(taskContentStart)
+                        .heightIn(min = 44.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Checkbox(
+                        checked = completed,
+                        onCheckedChange = onCheckedChange,
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = accentColor,
+                            uncheckedColor = accentColor,
+                            checkmarkColor = accentContentColor(accentColor)
+                        ),
+                        modifier = Modifier
+                            .offset(x = statusCheckboxCenterX - 12.dp)
+                            .size(24.dp)
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { showDetails = true }
+                        .padding(vertical = 2.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = task.title,
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                letterSpacing = 0.sp
+                            ),
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            color = if (completed) MaterialTheme.colorScheme.onSurface.copy(alpha = .62f)
+                            else MaterialTheme.colorScheme.onSurface,
+                            textDecoration = if (completed) TextDecoration.LineThrough else TextDecoration.None,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        StateBadge(badge.label, badge.color, badge.backgroundColor)
+                    }
+
+                    TaskMetadataLine(
+                        task = task,
+                        completed = completed,
+                        overdue = overdue
+                    )
+                }
+            }
         }
     }
 
@@ -179,7 +227,7 @@ private fun TaskMetadataLine(
 ) {
     val metadataColor = when {
         completed -> TaskTheme.colors.completedMetadataText
-        overdue -> TaskOverdueAccent.copy(alpha = .88f)
+        overdue -> TaskTheme.colors.overdueAccent.copy(alpha = .88f)
         else -> TaskTheme.colors.taskMetadataText
     }
 
@@ -225,6 +273,9 @@ private fun MetadataText(
     )
 }
 
+private fun accentContentColor(accentColor: Color): Color =
+    if (accentColor.luminance() > 0.5f) Color(0xFF081105) else Color.White
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TaskDetailsBottomSheet(
@@ -235,6 +286,7 @@ private fun TaskDetailsBottomSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val category = taskCategoryOrNull(task.tags)
     val statusText = when {
         task.isCompleted -> "Completed"
         isTaskOverdue(task) -> "Overdue"
@@ -293,7 +345,10 @@ private fun TaskDetailsBottomSheet(
                 )
             }
 
-            DetailSection(title = "Schedule") {
+            DetailSection(title = "Task details") {
+                if (category != null) {
+                    CategoryDetailLine(category = category)
+                }
                 DetailLine(label = "Due date", value = task.dueDate.format(taskDateFormatter))
                 DetailLine(label = "Reminder time", value = reminderTimeLabel(task))
                 DetailLine(
@@ -365,6 +420,49 @@ private fun DetailSection(
             color = TaskTheme.colors.subText
         )
         content()
+    }
+}
+
+@Composable
+private fun CategoryDetailLine(category: TaskCategory) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Category",
+            style = MaterialTheme.typography.bodyMedium.copy(letterSpacing = 0.sp),
+            color = TaskTheme.colors.subText,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(Modifier.width(12.dp))
+        CategoryPill(
+            category = category,
+            modifier = Modifier.weight(1.1f)
+        )
+    }
+}
+
+@Composable
+private fun CategoryPill(
+    category: TaskCategory,
+    modifier: Modifier = Modifier
+) {
+    val categoryColors = taskCategoryColors(category)
+    Box(modifier = modifier) {
+        Text(
+            text = category.label,
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
+            fontWeight = FontWeight.Bold,
+            color = categoryColors.contentColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .clip(RoundedCornerShape(7.dp))
+                .background(categoryColors.containerColor)
+                .padding(horizontal = 8.dp, vertical = 3.dp)
+        )
     }
 }
 

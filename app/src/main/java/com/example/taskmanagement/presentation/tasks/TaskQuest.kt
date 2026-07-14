@@ -3,6 +3,7 @@ package com.example.taskmanagement.presentation.tasks
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.example.taskmanagement.data.local.models.Task
+import com.example.taskmanagement.presentation.my_tasks.TaskTag
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -11,8 +12,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val taskTimeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
-
-val TaskOverdueAccent = Color(0xFFFF7A6B)
 
 enum class TaskPriorityLevel(
     val normalizedValue: String,
@@ -39,6 +38,63 @@ data class TaskCardBadgeUi(
     val color: Color,
     val backgroundColor: Color
 )
+
+data class TaskCategoryColors(
+    val contentColor: Color,
+    val containerColor: Color,
+    val selectedContainerColor: Color,
+    val selectedContentColor: Color
+)
+
+enum class TaskCategory(
+    val storedValue: String,
+    val label: String
+) {
+    WORK("WORK", "Work"),
+    PERSONAL("PERSONAL", "Personal"),
+    HEALTH("HEALTH", "Health")
+}
+
+fun taskCategoryOrNull(tags: String): TaskCategory? =
+    when (tags.trim().uppercase()) {
+        TaskCategory.WORK.storedValue -> TaskCategory.WORK
+        TaskCategory.PERSONAL.storedValue -> TaskCategory.PERSONAL
+        TaskCategory.HEALTH.storedValue -> TaskCategory.HEALTH
+        else -> null
+    }
+
+@Composable
+fun taskCategoryColors(category: TaskCategory): TaskCategoryColors =
+    when (category) {
+        TaskCategory.WORK -> TaskCategoryColors(
+            contentColor = TaskTheme.colors.tagWork,
+            containerColor = TaskTheme.colors.tagWorkBg,
+            selectedContainerColor = TaskTheme.colors.tagWork,
+            selectedContentColor = TaskTheme.colors.selectedTagWorkText
+        )
+        TaskCategory.PERSONAL -> TaskCategoryColors(
+            contentColor = TaskTheme.colors.tagPersonal,
+            containerColor = TaskTheme.colors.tagPersonalBg,
+            selectedContainerColor = TaskTheme.colors.tagPersonal,
+            selectedContentColor = TaskTheme.colors.selectedTagPersonalText
+        )
+        TaskCategory.HEALTH -> TaskCategoryColors(
+            contentColor = TaskTheme.colors.tagHealth,
+            containerColor = TaskTheme.colors.tagHealthBg,
+            selectedContainerColor = TaskTheme.colors.tagHealth,
+            selectedContentColor = TaskTheme.colors.selectedTagHealthText
+        )
+    }
+
+@Composable
+fun taskTagColors(tag: TaskTag): TaskCategoryColors =
+    taskCategoryColors(
+        when (tag) {
+            TaskTag.WORK -> TaskCategory.WORK
+            TaskTag.PERSONAL -> TaskCategory.PERSONAL
+            TaskTag.HEALTH -> TaskCategory.HEALTH
+        }
+    )
 
 fun normalizedTaskPriority(priority: String): TaskPriorityLevel =
     when (priority.trim().lowercase()) {
@@ -82,8 +138,8 @@ fun taskCardBadge(task: Task): TaskCardBadgeUi {
     return when {
         isTaskOverdue(task) -> TaskCardBadgeUi(
             label = "Overdue",
-            color = TaskOverdueAccent,
-            backgroundColor = TaskOverdueAccent.copy(alpha = .16f)
+            color = TaskTheme.colors.overdueAccent,
+            backgroundColor = TaskTheme.colors.overdueBg
         )
         task.isCompleted -> TaskCardBadgeUi(
             label = "Cleared",

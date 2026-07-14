@@ -73,7 +73,8 @@ class CalendarViewModel(
             currentMonth = currentMonth,
             selectedView = view,
             tasksForSelectedDate = tasks,
-            markedDatesInMonth = markedDates
+            markedDatesInMonth = markedDates,
+            currentWeekMonday = selectedDate.with(DayOfWeek.MONDAY)
         )
     }.stateIn(
         scope = viewModelScope,

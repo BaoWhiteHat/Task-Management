@@ -1,7 +1,7 @@
 package com.example.taskmanagement.presentation.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -49,10 +49,10 @@ fun AnalyticsTopAppBar(modifier: Modifier = Modifier) {
 @Composable
 fun NewTaskTopAppBar(modifier: Modifier = Modifier, onNavigateBack: () -> Unit) {
     CenterAlignedTopAppBar(
-        title = { Text("New Task") },
+        title = { Text("Create New Task") },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Filled.Close, contentDescription = "close")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
         }
     )

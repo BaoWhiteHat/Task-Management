@@ -83,25 +83,27 @@ class AnalyticsViewModel(
     ): List<CategoryData> {
         val tasksByCategory = tasks.groupBy { it.tags }
         return tasksByCategory.mapNotNull { (tag, tasksInCategory) ->
-            try {
-                val taskTag = TaskTag.valueOf(tag.uppercase())
-                val completedInCategory = tasksInCategory.count { it.isCompleted }
-                val percentage = if (tasksInCategory.isNotEmpty())
-                    completedInCategory.toFloat() / tasksInCategory.size
-                else 0f
-                val color = when (taskTag) {
-                    TaskTag.WORK -> TagWork
-                    TaskTag.PERSONAL -> TagPersonal
-                    TaskTag.HEALTH -> TagHealth
-                }
-                CategoryData(
-                    name = tag.lowercase().replaceFirstChar { it.uppercase() },
-                    percentage = percentage,
-                    color = color
-                )
-            } catch (e: IllegalStateException) {
-                null
+            val taskTag = runCatching {
+                TaskTag.valueOf(tag.trim().uppercase())
+            }.getOrNull() ?: return@mapNotNull null
+
+            val completedInCategory = tasksInCategory.count { it.isCompleted }
+            val percentage = if (tasksInCategory.isNotEmpty()) {
+                completedInCategory.toFloat() / tasksInCategory.size
+            } else {
+                0f
             }
+
+            val color = when (taskTag) {
+                TaskTag.WORK -> TagWork
+                TaskTag.PERSONAL -> TagPersonal
+                TaskTag.HEALTH -> TagHealth
+            }
+            CategoryData(
+                name = taskTag.name.lowercase().replaceFirstChar { it.uppercase() },
+                percentage = percentage,
+                color = color
+            )
         }.sortedByDescending { it.percentage }
     }
 }

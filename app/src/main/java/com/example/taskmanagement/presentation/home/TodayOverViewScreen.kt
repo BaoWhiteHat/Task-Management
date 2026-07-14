@@ -1,6 +1,7 @@
 package com.example.taskmanagement.presentation.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -167,6 +168,14 @@ private fun TodayOverViewScreen(
                 ) {
                     items(state.tasks, key = { it.id }) { task ->
                         TaskQuestCard(
+                            modifier = Modifier.animateItem(
+                                fadeInSpec = null,
+                                fadeOutSpec = null,
+                                placementSpec = tween(
+                                    durationMillis = 220,
+                                    easing = FastOutSlowInEasing
+                                )
+                            ),
                             task = task,
                             onCheckedChange = { onTaskCheckedChanged(task, it) },
                             onFocusClick = { onTaskFocus(task) }

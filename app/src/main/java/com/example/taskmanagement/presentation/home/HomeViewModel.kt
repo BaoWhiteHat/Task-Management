@@ -12,9 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.time.LocalDateTime
-import com.example.taskmanagement.presentation.tasks.isTaskOverdue
 
 enum class SyncStatus {
     IDLE,
@@ -61,9 +59,9 @@ class HomeViewModel(
         _currentTime
     ) {
         tasks, syncStatus, sortOrder, currentTime ->
-        val today = LocalDate.now()
+        val today = currentTime.toLocalDate()
         val actionableTasks = tasks.filter { task ->
-            isTaskOverdue(task) || (!task.isCompleted && task.dueDate == today)
+            task.dueDate == today || (!task.isCompleted && task.dueDate.isBefore(today))
         }
         val todayTasks = tasks.filter { it.dueDate == today }
         val completedTodayCount = todayTasks.count { it.isCompleted }
@@ -87,20 +85,12 @@ class HomeViewModel(
             SortOrder.DEFAULT,
             SortOrder.BY_PRIORITY_DESC,
             SortOrder.BY_TITLE_ASC -> tasks.sortedWith(
-                compareBy<Task> { homeTaskBucket(it) }
+                compareBy<Task> { it.isCompleted }
+                    .thenBy { it.dueDate }
                     .thenBy { it.dueHour }
                     .thenBy { it.dueMinute }
                     .thenBy { it.id }
             )
-        }
-    }
-
-    private fun homeTaskBucket(task: Task): Int {
-        if (isTaskOverdue(task)) return 0
-        return when (task.priority.trim().lowercase()) {
-            "high" -> 1
-            "medium" -> 2
-            else -> 3
         }
     }
 

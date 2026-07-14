@@ -14,6 +14,10 @@ val AuroraGreen500 = Color(0xFF1D9E75)
 val AuroraGreen700 = Color(0xFF0F6E56)
 val AuroraGreen900 = Color(0xFF053D2E)
 
+// Health category green used by Analytics category bars.
+val TagHealth         = AuroraGreen500
+val TagHealthBg       = AuroraGreen50
+
 // Surface / Background
 val LightBackground   = Color(0xFFF5F9F7)
 val LightSurface      = Color(0xFFFFFFFF)
@@ -90,7 +94,5 @@ val TagWork           = Color(0xFF5B6FF6)
 val TagWorkBg         = Color(0xFFEEF0FF)
 val TagPersonal       = Color(0xFFD4527C)
 val TagPersonalBg     = Color(0xFFFBEAF2)
-val TagHealth         = Color(0xFF1D9E75)
-val TagHealthBg       = Color(0xFFE8F5EF)
 val TagOther          = Color(0xFF888780)
 val TagOtherBg        = Color(0xFFF1EFE8)

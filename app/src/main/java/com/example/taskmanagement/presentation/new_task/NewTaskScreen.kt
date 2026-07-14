@@ -2,7 +2,6 @@ package com.example.taskmanagement.presentation.new_task
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.icu.util.Calendar
 import android.widget.DatePicker
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -11,7 +10,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,7 +25,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -34,11 +34,13 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -52,19 +54,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taskmanagement.presentation.my_tasks.Priority
 import com.example.taskmanagement.presentation.my_tasks.TaskTag
 import com.example.taskmanagement.presentation.ui.theme.TaskTheme
-import com.example.taskmanagement.presentation.tasks.formatEstimatedDuration
 import com.example.taskmanagement.presentation.tasks.taskPriorityUi
+import com.example.taskmanagement.presentation.tasks.taskTagColors
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
+import kotlin.math.roundToInt
 
 @Composable
 fun NewTaskScreen(
@@ -91,6 +100,8 @@ fun NewTaskScreen(
         onTagChange = viewModel::onTagChange,
         onCreateTask = viewModel::createTask,
         onReminderChange = viewModel::onReminderChange,
+        onTaskNameFocusChanged = viewModel::onTaskNameFocusChanged,
+        onValidateCurrentStep = viewModel::validateCurrentStep
     )
 }
 
@@ -104,9 +115,11 @@ private fun NewTaskScreen(
     onTimeChange: (Int, Int) -> Unit,
     onEstimatedDurationChange: (Int, Int) -> Unit,
     onPriorityChange: (Priority) -> Unit,
-    onTagChange: (TaskTag) -> Unit,
+    onTagChange: (TaskTag?) -> Unit,
     onReminderChange: (Boolean) -> Unit,
-    onCreateTask: () -> Unit,
+    onCreateTask: () -> Boolean,
+    onTaskNameFocusChanged: (Boolean) -> Unit,
+    onValidateCurrentStep: (Int) -> Boolean
 ) {
     var currentStep by rememberSaveable { mutableIntStateOf(0) }
     val totalSteps = 3
@@ -114,8 +127,31 @@ private fun NewTaskScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 24.dp)
     ) {
+        Spacer(Modifier.height(22.dp))
+
+        StepIndicator(
+            currentStep = currentStep,
+            totalSteps = totalSteps
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        val stepTitle = when (currentStep) {
+            0 -> "What do you need to do?"
+            1 -> "Schedule & Priority"
+            else -> "Organize & remind"
+        }
+        StepHeader(
+            stepLabel = "Step ${currentStep + 1} of $totalSteps",
+            title = stepTitle,
+            labelTitleSpacing = if (currentStep == 1) 4.dp else 6.dp
+        )
+
+        Spacer(Modifier.height(if (currentStep == 1) 24.dp else 20.dp))
+
         AnimatedVisibility(state.errorMessage != null) {
             state.errorMessage?.let {
                 Text(
@@ -131,26 +167,6 @@ private fun NewTaskScreen(
                 Spacer(Modifier.height(12.dp))
             }
         }
-
-        StepIndicator(
-            currentStep = currentStep,
-            totalSteps = totalSteps
-        )
-
-        Spacer(Modifier.height(24.dp))
-
-        val stepTitle = when (currentStep) {
-            0 -> "What do you need to do?"
-            1 -> "When & how important?"
-            else -> "Organize & remind"
-        }
-        Text(
-            text = stepTitle,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        Spacer(Modifier.height(20.dp))
 
         AnimatedContent(
             targetState = currentStep,
@@ -170,8 +186,10 @@ private fun NewTaskScreen(
                 0 -> StepTitleDescription(
                     title = state.title,
                     description = state.description,
+                    showTaskNameError = state.shouldShowTaskNameError,
                     onTitleChange = onTitleChange,
-                    onDescriptionChange = onDescriptionChange
+                    onDescriptionChange = onDescriptionChange,
+                    onTaskNameFocusChanged = onTaskNameFocusChanged
                 )
                 1 -> StepDatePriority(
                     dueDate = state.dueDate,
@@ -179,10 +197,17 @@ private fun NewTaskScreen(
                     dueMinute = state.dueMinute,
                     estimatedMinutes = state.estimatedMinutes,
                     selectedPriority = state.selectedPriority,
+                    canContinue = state.canContinueFromStep2,
                     onDueDateChange = onDueDateChange,
                     onTimeChange = onTimeChange,
                     onEstimatedDurationChange = onEstimatedDurationChange,
-                    onPriorityChange = onPriorityChange
+                    onPriorityChange = onPriorityChange,
+                    onBack = { currentStep-- },
+                    onContinue = {
+                        if (onValidateCurrentStep(currentStep)) {
+                            currentStep++
+                        }
+                    }
                 )
                 2 -> StepTagReminder(
                     selectedTag = state.selectedTag,
@@ -193,41 +218,92 @@ private fun NewTaskScreen(
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (currentStep > 0) {
-                OutlinedButton(
-                    onClick = { currentStep-- },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    border = ButtonDefaults.outlinedButtonBorder(true)
-                ) {
-                    Text("Back")
-                }
-            }
-
-            Button(
-                onClick = {
+        if (currentStep != 1) {
+            Spacer(Modifier.height(16.dp))
+            StepNavigationButtons(
+                showBack = currentStep > 0,
+                primaryLabel = if (currentStep < totalSteps - 1) "Next" else "Create Task",
+                primaryEnabled = if (currentStep == 0) state.canContinueFromStep1 else true,
+                onBack = { currentStep-- },
+                onPrimary = {
                     if (currentStep < totalSteps - 1) {
-                        currentStep++
+                        if (onValidateCurrentStep(currentStep)) {
+                            currentStep++
+                        }
                     } else {
-                        onCreateTask()
+                        if (!onCreateTask() && !state.canContinueFromStep1) {
+                            currentStep = 0
+                        }
                     }
-                },
+                }
+            )
+            Spacer(Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun StepHeader(
+    stepLabel: String,
+    title: String,
+    labelTitleSpacing: Dp = 6.dp
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(labelTitleSpacing)) {
+        Text(
+            text = stepLabel,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+    }
+}
+
+@Composable
+private fun StepNavigationButtons(
+    showBack: Boolean,
+    primaryLabel: String,
+    primaryEnabled: Boolean = true,
+    onBack: () -> Unit,
+    onPrimary: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        if (showBack) {
+            OutlinedButton(
+                onClick = onBack,
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.4f)
                     .height(52.dp),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
-                Text(
-                    text = if (currentStep < totalSteps - 1) "Next" else "Create Task",
-                    fontWeight = FontWeight.SemiBold
-                )
+                Text("Back")
             }
+        }
+
+        Button(
+            onClick = onPrimary,
+            enabled = primaryEnabled,
+            modifier = Modifier
+                .weight(if (showBack) 0.6f else 1f)
+                .height(52.dp),
+            shape = RoundedCornerShape(18.dp),
+            colors = ButtonDefaults.buttonColors(
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .55f)
+            )
+        ) {
+            Text(
+                text = primaryLabel,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
@@ -239,15 +315,17 @@ private fun StepIndicator(currentStep: Int, totalSteps: Int) {
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         repeat(totalSteps) { index ->
+            val segmentColor = when {
+                index < currentStep -> MaterialTheme.colorScheme.primary.copy(alpha = .62f)
+                index == currentStep -> MaterialTheme.colorScheme.primary
+                else -> MaterialTheme.colorScheme.surfaceVariant
+            }
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(
-                        if (index <= currentStep) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.surfaceVariant
-                    )
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(segmentColor)
             )
         }
     }
@@ -257,24 +335,40 @@ private fun StepIndicator(currentStep: Int, totalSteps: Int) {
 private fun StepTitleDescription(
     title: String,
     description: String,
+    showTaskNameError: Boolean,
     onTitleChange: (String) -> Unit,
-    onDescriptionChange: (String) -> Unit
+    onDescriptionChange: (String) -> Unit,
+    onTaskNameFocusChanged: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
-        Text(
-            text = "Title",
-            style = MaterialTheme.typography.labelLarge,
-            color = TaskTheme.colors.subText
-        )
-        Spacer(Modifier.height(6.dp))
         OutlinedTextField(
             value = title,
             onValueChange = onTitleChange,
+            label = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Task name")
+                    Text(
+                        text = "*",
+                        modifier = Modifier
+                            .padding(start = 2.dp)
+                            .semantics { contentDescription = "required" },
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
             placeholder = { Text("e.g. Finish the report") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { onTaskNameFocusChanged(it.isFocused) },
             shape = RoundedCornerShape(12.dp),
+            isError = showTaskNameError,
+            supportingText = {
+                if (showTaskNameError) {
+                    Text("Task name is required")
+                }
+            },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.outline
@@ -284,15 +378,20 @@ private fun StepTitleDescription(
 
         Spacer(Modifier.height(20.dp))
 
-        Text(
-            text = "Description",
-            style = MaterialTheme.typography.labelLarge,
-            color = TaskTheme.colors.subText
-        )
-        Spacer(Modifier.height(6.dp))
         OutlinedTextField(
             value = description,
             onValueChange = onDescriptionChange,
+            label = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Description")
+                    Text(
+                        text = "Optional",
+                        modifier = Modifier.padding(start = 8.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TaskTheme.colors.subText
+                    )
+                }
+            },
             placeholder = { Text("Add some details...") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -314,21 +413,25 @@ private fun StepDatePriority(
     dueMinute: Int,
     estimatedMinutes: Int,
     selectedPriority: Priority,
+    canContinue: Boolean,
     onDueDateChange: (LocalDate) -> Unit,
     onTimeChange: (Int, Int) -> Unit,
     onEstimatedDurationChange: (Int, Int) -> Unit,
-    onPriorityChange: (Priority) -> Unit
+    onPriorityChange: (Priority) -> Unit,
+    onBack: () -> Unit,
+    onContinue: () -> Unit
 ) {
     val context = LocalContext.current
-    val calendar = Calendar.getInstance()
+    val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH)
+    val timeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, year: Int, month: Int, day: Int ->
             onDueDateChange(LocalDate.of(year, month + 1, day))
         },
-        calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH),
-        calendar.get(Calendar.DAY_OF_MONTH)
+        dueDate.year,
+        dueDate.monthValue - 1,
+        dueDate.dayOfMonth
     )
 
     val timePickerDialog = TimePickerDialog(
@@ -340,115 +443,115 @@ private fun StepDatePriority(
     )
 
     Column(
-        modifier = Modifier.verticalScroll(rememberScrollState())
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 24.dp)
     ) {
-        Text(
-            text = "Due Date",
-            style = MaterialTheme.typography.labelLarge,
-            color = TaskTheme.colors.subText
-        )
-        Spacer(Modifier.height(6.dp))
-        OutlinedTextField(
-            value = dueDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
-            onValueChange = {},
-            readOnly = true,
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable { datePickerDialog.show() },
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
-            trailingIcon = {
-                IconButton(onClick = { datePickerDialog.show() }) {
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 36.dp)
+        ) {
+            ScheduleSelectionCard(
+                label = "Due date",
+                value = dueDate.format(dateFormatter),
+                icon = {
                     Icon(
                         imageVector = Icons.Filled.CalendarMonth,
                         contentDescription = "Pick date",
                         tint = MaterialTheme.colorScheme.primary
                     )
-                }
-            }
-        )
+                },
+                onClick = { datePickerDialog.show() }
+            )
 
-        Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
 
-        Text(
-            text = "Reminder Time",
-            style = MaterialTheme.typography.labelLarge,
-            color = TaskTheme.colors.subText
-        )
-        Spacer(Modifier.height(6.dp))
-        OutlinedTextField(
-            value = LocalTime.of(dueHour, dueMinute).format(DateTimeFormatter.ofPattern("hh:mm a")),
-            onValueChange = {},
-            readOnly = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { timePickerDialog.show() },
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
-            trailingIcon = {
-                IconButton(onClick = { timePickerDialog.show() }) {
+            ScheduleSelectionCard(
+                label = "Reminder time",
+                value = LocalTime.of(dueHour, dueMinute).format(timeFormatter),
+                icon = {
                     Icon(
                         imageVector = Icons.Filled.Schedule,
                         contentDescription = "Pick time",
                         tint = MaterialTheme.colorScheme.primary
                     )
-                }
-            }
+                },
+                onClick = { timePickerDialog.show() }
+            )
+
+            Spacer(Modifier.height(32.dp))
+
+            EstimatedDurationPicker(
+                estimatedMinutes = estimatedMinutes,
+                onDurationChange = onEstimatedDurationChange
+            )
+
+            Spacer(Modifier.height(32.dp))
+
+            PrioritySelector(
+                selectedPriority = selectedPriority,
+                onPriorityChange = onPriorityChange
+            )
+        }
+
+        StepNavigationButtons(
+            showBack = true,
+            primaryLabel = "Continue",
+            primaryEnabled = canContinue,
+            onBack = onBack,
+            onPrimary = onContinue
         )
+    }
+}
 
-        Spacer(Modifier.height(24.dp))
-
-        EstimatedDurationPicker(
-            estimatedMinutes = estimatedMinutes,
-            onDurationChange = onEstimatedDurationChange
-        )
-
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            text = "Priority",
-            style = MaterialTheme.typography.labelLarge,
-            color = TaskTheme.colors.subText
-        )
-        Spacer(Modifier.height(10.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+@Composable
+private fun ScheduleSelectionCard(
+    label: String,
+    value: String,
+    icon: @Composable () -> Unit,
+    onClick: () -> Unit
+) {
+    val shape = RoundedCornerShape(24.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 92.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(
+                BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = .72f)),
+                shape
+            )
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Priority.entries.forEach { priority ->
-                val isSelected = selectedPriority == priority
-                val priorityUi = taskPriorityUi(priority.name)
-                val selectedTextColor = when (priority) {
-                    Priority.HIGH -> TaskTheme.colors.selectedPriorityHighText
-                    Priority.MEDIUM -> TaskTheme.colors.selectedPriorityMediumText
-                    Priority.LOW -> TaskTheme.colors.selectedPriorityLowText
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) priorityUi.accentColor else priorityUi.badgeBackgroundColor)
-                        .clickable { onPriorityChange(priority) }
-                        .padding(vertical = 14.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = priorityUi.badgeLabel,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (isSelected)
-                            selectedTextColor
-                        else priorityUi.accentColor
-                    )
-                }
-            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = .12f))
+                .padding(13.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            icon()
         }
     }
 }
@@ -458,82 +561,140 @@ private fun EstimatedDurationPicker(
     estimatedMinutes: Int,
     onDurationChange: (Int, Int) -> Unit
 ) {
-    val selectedHours = estimatedMinutes / 60
-    val selectedMinutes = estimatedMinutes % 60
+    val safeMinutes = estimatedMinutes.coerceIn(0, 480)
+    val shape = RoundedCornerShape(24.dp)
 
-    Text(
-        text = "Estimated Duration",
-        style = MaterialTheme.typography.labelLarge,
-        color = TaskTheme.colors.subText
-    )
-    Spacer(Modifier.height(6.dp))
-    Text(
-        text = formatEstimatedDuration(estimatedMinutes),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.primary
-    )
-    Spacer(Modifier.height(10.dp))
-    Text("Hours", style = MaterialTheme.typography.labelSmall, color = TaskTheme.colors.subText)
-    Spacer(Modifier.height(6.dp))
-    FlowRow(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        shape = shape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = .72f)),
+        shadowElevation = 0.dp
     ) {
-        (0..8).forEach { hours ->
-            val enabled = !(hours == 0 && selectedMinutes == 0) &&
-                    !(hours == 8 && selectedMinutes == 30)
-            DurationOption(
-                text = "${hours}h",
-                selected = selectedHours == hours,
-                enabled = enabled,
-                onClick = { onDurationChange(hours, selectedMinutes) }
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Planned duration",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formatPlannedDuration(safeMinutes),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Slider(
+                value = safeMinutes.toFloat(),
+                onValueChange = { value ->
+                    val snappedMinutes = (value / 30f).roundToInt().times(30).coerceIn(0, 480)
+                    onDurationChange(snappedMinutes / 60, snappedMinutes % 60)
+                },
+                valueRange = 0f..480f,
+                steps = 0,
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                    inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = .28f)
+                )
             )
-        }
-    }
-    Spacer(Modifier.height(10.dp))
-    Text("Minutes", style = MaterialTheme.typography.labelSmall, color = TaskTheme.colors.subText)
-    Spacer(Modifier.height(6.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(0, 30).forEach { minutes ->
-            val enabled = !(selectedHours == 0 && minutes == 0) &&
-                    !(selectedHours == 8 && minutes == 30)
-            DurationOption(
-                text = "${minutes}m",
-                selected = selectedMinutes == minutes,
-                enabled = enabled,
-                onClick = { onDurationChange(selectedHours, minutes) }
-            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                listOf("0h", "4h", "8h").forEach { label ->
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun DurationOption(
-    text: String,
-    selected: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit
+private fun PrioritySelector(
+    selectedPriority: Priority,
+    onPriorityChange: (Priority) -> Unit
 ) {
-    val accent = MaterialTheme.colorScheme.primary
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "Priority",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Priority.entries.forEach { priority ->
+                PriorityButton(
+                    priority = priority,
+                    selected = selectedPriority == priority,
+                    onClick = { onPriorityChange(priority) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PriorityButton(
+    priority: Priority,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val priorityUi = taskPriorityUi(priority.name)
+    val shape = RoundedCornerShape(18.dp)
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(9.dp))
-            .background(if (selected) accent else MaterialTheme.colorScheme.surfaceVariant)
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+        modifier = modifier
+            .height(52.dp)
+            .clip(shape)
+            .background(if (selected) priorityUi.badgeBackgroundColor else Color.Transparent)
+            .border(
+                BorderStroke(
+                    width = if (selected) 2.dp else 1.dp,
+                    color = priorityUi.accentColor.copy(alpha = if (selected) 1f else .72f)
+                ),
+                shape
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = when {
-                selected -> MaterialTheme.colorScheme.onPrimary
-                enabled -> MaterialTheme.colorScheme.onSurfaceVariant
-                else -> TaskTheme.colors.subText.copy(alpha = .35f)
-            }
+            text = priorityUi.badgeLabel,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            color = priorityUi.accentColor
         )
+    }
+}
+
+private fun formatPlannedDuration(totalMinutes: Int): String {
+    val safeMinutes = totalMinutes.coerceIn(0, 480)
+    val hours = safeMinutes / 60
+    val minutes = safeMinutes % 60
+    return when {
+        safeMinutes == 0 -> "0 min"
+        hours == 0 -> "$minutes min"
+        else -> "$hours hr ${minutes.toString().padStart(2, '0')} min"
     }
 }
 
@@ -541,17 +702,26 @@ private fun DurationOption(
 private fun StepTagReminder(
     selectedTag: TaskTag?,
     isReminderEnabled: Boolean,
-    onTagChange: (TaskTag) -> Unit,
+    onTagChange: (TaskTag?) -> Unit,
     onReminderChange: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
-        Text(
-            text = "Category",
-            style = MaterialTheme.typography.labelLarge,
-            color = TaskTheme.colors.subText
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Category",
+                style = MaterialTheme.typography.labelLarge,
+                color = TaskTheme.colors.subText
+            )
+            Text(
+                text = "*",
+                modifier = Modifier
+                    .padding(start = 2.dp)
+                    .semantics { contentDescription = "required" },
+                color = MaterialTheme.colorScheme.error
+            )
+        }
         Spacer(Modifier.height(10.dp))
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
@@ -560,27 +730,16 @@ private fun StepTagReminder(
         ) {
             TaskTag.entries.forEach { tag ->
                 val isSelected = selectedTag == tag
-                val tagColor = when (tag) {
-                    TaskTag.WORK -> TaskTheme.colors.tagWork
-                    TaskTag.PERSONAL -> TaskTheme.colors.tagPersonal
-                    TaskTag.HEALTH -> TaskTheme.colors.tagHealth
-                }
-                val tagBgColor = when (tag) {
-                    TaskTag.WORK -> TaskTheme.colors.tagWorkBg
-                    TaskTag.PERSONAL -> TaskTheme.colors.tagPersonalBg
-                    TaskTag.HEALTH -> TaskTheme.colors.tagHealthBg
-                }
-                val selectedTextColor = when (tag) {
-                    TaskTag.WORK -> TaskTheme.colors.selectedTagWorkText
-                    TaskTag.PERSONAL -> TaskTheme.colors.selectedTagPersonalText
-                    TaskTag.HEALTH -> TaskTheme.colors.selectedTagHealthText
-                }
+                val tagColors = taskTagColors(tag)
 
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .background(if (isSelected) tagColor else tagBgColor)
-                        .clickable { onTagChange(tag) }
+                        .background(
+                            if (isSelected) tagColors.selectedContainerColor
+                            else tagColors.containerColor
+                        )
+                        .clickable { onTagChange(if (isSelected) null else tag) }
                         .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
                     Text(
@@ -588,8 +747,8 @@ private fun StepTagReminder(
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (isSelected)
-                            selectedTextColor
-                        else tagColor
+                            tagColors.selectedContentColor
+                        else tagColors.contentColor
                     )
                 }
             }
@@ -635,7 +794,7 @@ private fun StepTagReminder(
 @Composable
 private fun NewTaskScreenPrev() {
     NewTaskScreen(
-        state = NewTaskUiState(),
+        state = NewTaskUiState.newTask(),
         onTitleChange = {},
         onDescriptionChange = {},
         onDueDateChange = {},
@@ -644,6 +803,8 @@ private fun NewTaskScreenPrev() {
         onPriorityChange = {},
         onTagChange = {},
         onReminderChange = {},
-        onCreateTask = {}
+        onCreateTask = { true },
+        onTaskNameFocusChanged = {},
+        onValidateCurrentStep = { true }
     )
 }
